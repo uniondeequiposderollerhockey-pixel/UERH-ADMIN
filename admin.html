@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UERH Admin - Control Oficial</title>
+    <title>UERH Admin - Panel Oficial</title>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -23,7 +23,7 @@
             background-image: radial-gradient(circle at 50% -20%, rgba(66,133,244,0.15) 0%, rgba(10,14,23,0) 50%);
         }
 
-        /* Pantalla de Login (Basada en tu referencia) */
+        /* --- ESTILO PORTADA REFERENCIAL --- */
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; text-align: center; padding: 20px;
@@ -40,7 +40,6 @@
             padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer;
             position: relative; z-index: 1; transition: transform 0.2s;
         }
-        .btn-google:hover { transform: scale(1.02); }
         .btn-google::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             border-radius: 8px; padding: 2px;
@@ -49,50 +48,30 @@
             -webkit-mask-composite: destination-out; mask-composite: exclude;
         }
 
-        /* Panel Principal */
+        /* --- ESTILO PANEL ADMIN --- */
         .container { max-width: 1100px; margin: auto; padding: 20px; display: none; }
-        .user-bar { 
-            background: var(--bg-card); padding: 12px 20px; border-radius: 10px; 
-            margin-bottom: 20px; display: flex; justify-content: space-between; 
-            align-items: center; border: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; 
-        }
+        .user-bar { background: var(--bg-card); padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .stats { display: flex; gap: 12px; }
         .stat-box { background: var(--bg-card); padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); text-align: center; min-width: 110px; }
-        .stat-box small { display: block; font-size: 0.65rem; color: var(--color-blue); text-transform: uppercase; font-weight: bold; }
+        .stat-box small { display: block; font-size: 0.65rem; color: var(--color-blue); text-transform: uppercase; }
         .stat-box span { font-size: 1.2rem; font-weight: bold; }
-
-        .controls { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: var(--bg-card); padding: 15px; border-radius: 12px; 
-            margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); gap: 10px;
-        }
-        select, input { background: #000; border: 1px solid #333; color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
 
         .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #161b28; color: var(--color-blue); text-align: left; padding: 15px; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
+        th { background: #161b28; color: var(--color-blue); text-align: left; padding: 15px; text-transform: uppercase; font-size: 0.7rem; }
         td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
-        /* Estilos de Admin */
-        .admin-only { display: none; }
-        body.is-admin .admin-only { display: inline-block; }
-        body.is-admin .admin-cell { display: table-cell; }
-
-        .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #333; transition: 0.2s; }
-        .foto-mini:hover { border-color: var(--color-blue); transform: scale(1.1); }
+        .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #333; }
         
         .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
-        .badge-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
         .badge-approved { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
+        .badge-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
 
-        /* Modales */
+        /* Modal Visor */
         .modal-overlay { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); }
-        #modal-img { max-width: 90%; max-height: 80vh; border-radius: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        
-        .btn-action { padding: 6px 12px; border-radius: 5px; cursor: pointer; border: none; font-size: 0.75rem; font-weight: bold; transition: 0.2s; }
+        #modal-img { max-width: 90%; max-height: 80vh; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -108,37 +87,16 @@
 
 <div id="main-container" class="container">
     <div class="user-bar">
-        <div>
-            <span id="user-mail" style="color: var(--text-muted);"></span> 
-            <span id="user-role" style="margin-left:10px; color: var(--color-blue); font-weight: bold; text-transform: uppercase;"></span>
-        </div>
-        <button onclick="logout()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px; font-size: 0.75rem;">Cerrar Sesión</button>
+        <div><span id="user-mail"></span> <span id="user-role" style="margin-left:10px; color:var(--color-blue); font-weight:bold;"></span></div>
+        <button onclick="logout()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Salir</button>
     </div>
 
     <div class="header">
-        <h2 style="margin:0; letter-spacing: 1px;">SISTEMA <span style="color:var(--color-blue)">ADMIN</span></h2>
+        <h2>SISTEMA <span style="color:var(--color-blue)">CONTROL</span></h2>
         <div class="stats">
-            <div class="stat-box"><small>Registrados</small><span id="count-j">0</span></div>
-            <div class="stat-box">
-                <small>Recaudación</small>
-                <span id="count-m" style="color:var(--success)">$ 0</span>
-            </div>
+            <div class="stat-box"><small>Inscritos</small><span id="count-j">0</span></div>
+            <div class="stat-box"><small>Caja Total</small><span id="count-m" style="color:var(--success)">$ 0</span></div>
         </div>
-    </div>
-
-    <div class="controls">
-        <div style="display:flex; gap:10px;">
-            <select id="f-equipo" onchange="renderTable()">
-                <option value="todos">Todos los Equipos</option>
-                <option value="Lobos">Lobos</option>
-                <option value="Thunderfast">Thunderfast</option>
-                <option value="Tejones">Tejones</option>
-                <option value="Tcp">Tcp</option>
-                <option value="Usb">Usb</option>
-            </select>
-            <input type="text" id="f-nombre" placeholder="Buscar jugador..." onkeyup="renderTable()">
-        </div>
-        <button onclick="exportarExcel()" style="background: var(--success); color:white; border:none; padding:8px 18px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:bold;">DESCARGAR EXCEL</button>
     </div>
 
     <div class="table-wrapper">
@@ -146,11 +104,10 @@
             <thead>
                 <tr>
                     <th>Fotos</th>
-                    <th>Jugador / WhatsApp</th>
-                    <th>Equipo</th>
-                    <th>Rol / Nº</th>
+                    <th>Jugador</th>
+                    <th>Equipo / Rol</th>
                     <th>Estado</th>
-                    <th class="admin-only admin-cell">Acciones</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="main-table"></tbody>
@@ -162,38 +119,10 @@
     <img id="modal-img" src="">
 </div>
 
-<div id="modal-edit" class="modal-overlay">
-    <div class="modal-content">
-        <h3 style="margin-top:0; color:var(--color-blue); text-align: center;">EDITAR REGISTRO</h3>
-        <input type="hidden" id="edit-id">
-        <label style="font-size:0.7rem; color:var(--text-muted)">NOMBRE DEL JUGADOR</label>
-        <input type="text" id="edit-nombre" style="width:100%; margin-bottom:15px; box-sizing:border-box;">
-        
-        <label style="font-size:0.7rem; color:var(--text-muted)">WHATSAPP</label>
-        <input type="text" id="edit-wa" style="width:100%; margin-bottom:15px; box-sizing:border-box;">
-        
-        <label style="font-size:0.7rem; color:var(--text-muted)">EQUIPO</label>
-        <select id="edit-equipo" style="width:100%; margin-bottom:15px;">
-            <option value="Lobos">Lobos</option>
-            <option value="Thunderfast">Thunderfast</option>
-            <option value="Tejones">Tejones</option>
-            <option value="Tcp">Tcp</option>
-            <option value="Usb">Usb</option>
-        </select>
-
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button onclick="document.getElementById('modal-edit').style.display='none'" style="flex:1; padding:12px; cursor:pointer; background:#222; color:white; border:none; border-radius:6px;">CANCELAR</button>
-            <button onclick="guardarEdicion()" style="flex:1; padding:12px; background:var(--color-blue); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">GUARDAR</button>
-        </div>
-    </div>
-</div>
-
 <script>
-    // Configuración de Admins
-    const ADMINS = ["rojjosue@gmail.com", "josuerojas@gmail.com", "uniondeequiposderollerhockey@gmail.com"]; 
-    
-    // Configuración de Firebase
-    const firebaseConfig = {
+    const ADMINS = ["rojjosue@gmail.com", "josuerojas@gmail.com", "uniondeequiposderollerhockey@gmail.com"];
+
+    firebase.initializeApp({
         apiKey: "AIzaSyCREXn3CyGfcSJlOLYn79vvUbgsTs4tc6c",
         authDomain: "uerh-t2026.firebaseapp.com",
         databaseURL: "https://uerh-t2026-default-rtdb.firebaseio.com",
@@ -201,119 +130,63 @@
         storageBucket: "uerh-t2026.firebasestorage.app",
         messagingSenderId: "378184888320",
         appId: "1:378184888320:web:72183df90850048fc028e5"
-    };
+    });
 
-    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-    let cacheData = {};
-    let isAdmin = false;
 
-    // Autenticación
     function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
     auth.onAuthStateChanged(user => {
-        if (user) {
-            const email = user.email.toLowerCase();
-            isAdmin = ADMINS.includes(email);
+        if (user && ADMINS.includes(user.email.toLowerCase())) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-container').style.display = 'block';
-            document.getElementById('user-mail').innerText = email;
-            document.getElementById('user-role').innerText = isAdmin ? "ADMINISTRADOR" : "LECTOR";
-            if (isAdmin) document.body.classList.add('is-admin');
+            document.getElementById('user-mail').innerText = user.email;
+            document.getElementById('user-role').innerText = "[ADMIN]";
             cargarDatos();
-        } else {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-container').style.display = 'none';
+        } else if (user) {
+            alert("No tienes permisos de administrador.");
+            logout();
         }
     });
 
     function cargarDatos() {
         db.ref('inscripciones').on('value', snapshot => {
-            cacheData = snapshot.val() || {};
-            renderTable();
-        });
-    }
+            const data = snapshot.val() || {};
+            const tbody = document.getElementById('main-table');
+            tbody.innerHTML = "";
+            let count = 0, money = 0;
 
-    function renderTable() {
-        const eqF = document.getElementById('f-equipo').value;
-        const nomF = document.getElementById('f-nombre').value.toLowerCase();
-        const tbody = document.getElementById('main-table');
-        tbody.innerHTML = "";
-        let totalJ = 0; let totalD = 0;
-
-        for (let id in cacheData) {
-            const r = cacheData[id];
-            // Soporte para estructura antigua y nueva de roles
-            const firstRole = r.roles ? r.roles[0] : { team: r.teamName, role: r.role, shirt: r.shirtNum };
-            
-            if ((eqF === "todos" || firstRole.team === eqF) && (r.jugadorName || "").toLowerCase().includes(nomF)) {
-                totalJ++;
-                if (r.estado === "approved") totalD += 1200;
+            for (let id in data) {
+                const r = data[id];
+                count++;
+                if (r.estado === "approved") money += 1200;
+                
+                const rolesTxt = r.roles ? r.roles.map(x => `${x.team} (${x.role})`).join('<br>') : `${r.teamName} (${r.role})`;
 
                 tbody.innerHTML += `
                     <tr>
                         <td>
-                            <img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirImagen('${r.fotoCarnet}')">
-                            <img src="${r.fotoPago}" class="foto-mini" onclick="abrirImagen('${r.fotoPago}')" style="margin-left:5px">
+                            <img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirVisor('${r.fotoCarnet}')">
+                            <img src="${r.fotoPago}" class="foto-mini" onclick="abrirVisor('${r.fotoPago}')">
                         </td>
-                        <td>
-                            <strong style="${isAdmin ? 'cursor:pointer; color:var(--color-blue);' : ''}" onclick="${isAdmin ? `abrirEdit('${id}')` : ''}">${r.jugadorName}</strong><br>
-                            <small style="color:#25D366">${r.whatsapp || ""}</small>
-                        </td>
-                        <td><b>${firstRole.team}</b></td>
-                        <td><small>${firstRole.role} / #${firstRole.shirt || "--"}</small></td>
+                        <td><strong>${r.jugadorName}</strong><br><small>${r.whatsapp || ''}</small></td>
+                        <td><small>${rolesTxt}</small></td>
                         <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : 'badge-pending'}">${(r.estado || 'pendiente').toUpperCase()}</span></td>
-                        <td class="admin-only admin-cell">
-                            <button class="btn-action" onclick="aprobar('${id}')" style="background:var(--color-blue); color:white;" ${r.estado === 'approved' ? 'disabled style="opacity:0.3"' : ''}>APROBAR</button>
-                            <button class="btn-action" onclick="borrar('${id}')" style="background:none; color:var(--danger); border:1px solid var(--danger); margin-left:5px;">ELIMINAR</button>
+                        <td>
+                            <button onclick="aprobar('${id}')" style="background:var(--color-blue); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">OK</button>
                         </td>
                     </tr>
                 `;
             }
-        }
-        document.getElementById('count-j').innerText = totalJ;
-        document.getElementById('count-m').innerText = "$ " + totalD.toLocaleString();
+            document.getElementById('count-j').innerText = count;
+            document.getElementById('count-m').innerText = "$ " + money.toLocaleString();
+        });
     }
 
-    // Funciones de Gestión
-    function abrirEdit(id) {
-        if(!isAdmin) return;
-        const r = cacheData[id];
-        const firstRole = r.roles ? r.roles[0] : { team: r.teamName, role: r.role, shirt: r.shirtNum };
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-nombre').value = r.jugadorName;
-        document.getElementById('edit-wa').value = r.whatsapp;
-        document.getElementById('edit-equipo').value = firstRole.team;
-        document.getElementById('modal-edit').style.display = 'flex';
-    }
-
-    function guardarEdicion() {
-        const id = document.getElementById('edit-id').value;
-        db.ref('inscripciones/' + id).update({
-            jugadorName: document.getElementById('edit-nombre').value,
-            whatsapp: document.getElementById('edit-wa').value
-        }).then(() => document.getElementById('modal-edit').style.display = 'none');
-    }
-
-    function abrirImagen(url) { if(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; } }
-    function aprobar(id) { if(isAdmin && confirm("¿Aprobar este registro?")) db.ref('inscripciones/' + id).update({ estado: 'approved' }); }
-    function borrar(id) { if(isAdmin && confirm("¿Seguro que quieres eliminar este registro permanentemente?")) db.ref('inscripciones/' + id).remove(); }
-    
-    function exportarExcel() {
-        let csv = "\uFEFFNombre,WhatsApp,Equipo,Estado\n";
-        for (let id in cacheData) {
-            const r = cacheData[id];
-            const firstRole = r.roles ? r.roles[0] : { team: r.teamName };
-            csv += `"${r.jugadorName}","${r.whatsapp}","${firstRole.team}","${r.estado}"\n`;
-        }
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "UERH_Reporte_2026.csv";
-        link.click();
-    }
+    function abrirVisor(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; }
+    function aprobar(id) { if(confirm("¿Aprobar registro?")) db.ref('inscripciones/' + id).update({ estado: 'approved' }); }
 </script>
 </body>
 </html>
