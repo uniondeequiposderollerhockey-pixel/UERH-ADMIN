@@ -243,8 +243,13 @@
                 if (r.estado === "approved") money += 1200;
                 
                 let badgeClass = "badge-pending";
+                let textoEstado = (r.estado || 'pendiente').toUpperCase();
+
                 if(r.estado === "approved") badgeClass = "badge-approved";
-                if(r.estado === "rejected") badgeClass = "badge-rejected";
+                if(r.estado === "rejected") {
+                    badgeClass = "badge-rejected";
+                    textoEstado = "RECHAZADO"; // Cambio visual solicitado
+                }
 
                 tbody.innerHTML += `
                     <tr>
@@ -258,7 +263,7 @@
                             <br><small>${r.whatsapp || ''}</small>
                         </td>
                         <td><small>${rolesTxt.replace(/, /g, '<br>')}</small></td>
-                        <td><span class="badge ${badgeClass}">${(r.estado || 'pendiente').toUpperCase()}</span></td>
+                        <td><span class="badge ${badgeClass}">${textoEstado}</span></td>
                         <td>
                             <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')" title="Aprobar">OK</button>
                             <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'delete')" title="Rechazar">X</button>
@@ -322,7 +327,8 @@
             const r = rawData[id];
             const rolesTxt = r.roles ? r.roles.map(x => `${x.team}-${x.role}`).join(' | ') : `${r.teamName}-${r.role}`;
             if (r.jugadorName.toLowerCase().includes(searchName) && (selectedTeam === "" || rolesTxt.includes(selectedTeam))) {
-                csvContent += `"${r.jugadorName}","${r.shirtNum || 'S/N'}","${r.whatsapp || ''}","${rolesTxt}","${r.estado || 'pendiente'}"\n`;
+                let estadoTxt = r.estado === 'rejected' ? 'rechazado' : (r.estado || 'pendiente');
+                csvContent += `"${r.jugadorName}","${r.shirtNum || 'S/N'}","${r.whatsapp || ''}","${rolesTxt}","${estadoTxt}"\n`;
             }
         }
         const link = document.createElement("a");
@@ -337,3 +343,4 @@
 </script>
 </body>
 </html>
+
