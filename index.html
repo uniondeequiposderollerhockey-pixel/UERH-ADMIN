@@ -254,7 +254,7 @@
                             <img src="${r.fotoPago}" class="foto-mini" onclick="abrirVisor('${r.fotoPago}')">
                         </td>
                         <td>
-                            <strong>${r.jugadorName}</strong> <span style="color:var(--color-blue); font-weight:bold;">#${r.numeroCamiseta || 'SN'}</span>
+                            <strong>${r.jugadorName}</strong> <span style="color:var(--color-blue); font-weight:bold;">#${r.numeroCamiseta || 'S/N'}</span>
                             <br><small>${r.whatsapp || ''}</small>
                         </td>
                         <td><small>${rolesTxt.replace(/, /g, '<br>')}</small></td>
@@ -287,9 +287,9 @@
                 container.innerHTML += `
                     <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
                         <label>Equipo ${index + 1}</label>
-                        <input type="text" class="edit-team" data-index="${index}" value="${rol.team}">
+                        <input type="text" class="edit-team" value="${rol.team}">
                         <label>Rol ${index + 1}</label>
-                        <select class="edit-role" data-index="${index}">
+                        <select class="edit-role">
                             <option value="Jugador" ${rol.role === 'Jugador' ? 'selected' : ''}>Jugador</option>
                             <option value="Portero" ${rol.role === 'Portero' ? 'selected' : ''}>Portero</option>
                         </select>
@@ -334,12 +334,8 @@
             const teamsInputs = document.querySelectorAll('.edit-team');
             const rolesSelects = document.querySelectorAll('.edit-role');
             let nuevosRoles = [];
-            
             teamsInputs.forEach((input, i) => {
-                nuevosRoles.push({
-                    team: input.value,
-                    role: rolesSelects[i].value
-                });
+                nuevosRoles.push({ team: input.value, role: rolesSelects[i].value });
             });
             updateData.roles = nuevosRoles;
         } else {
@@ -349,15 +345,12 @@
         
         db.ref('inscripciones/' + id).update(updateData).then(() => {
             cerrarModalEdicion();
-            alert("Registro actualizado correctamente.");
         });
     }
 
     function actualizarEstado(id, accion) {
         if (accion === 'approved') {
-            if(confirm("¿Aprobar este registro?")) {
-                db.ref('inscripciones/' + id).update({ estado: 'approved' });
-            }
+            if(confirm("¿Aprobar este registro?")) db.ref('inscripciones/' + id).update({ estado: 'approved' });
         } else if (accion === 'delete') {
             if(confirm("¿ELIMINAR PERMANENTEMENTE? Esta acción no se puede deshacer.")) {
                 db.ref('inscripciones/' + id).remove();
@@ -388,4 +381,3 @@
 </script>
 </body>
 </html>
-
