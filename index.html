@@ -78,7 +78,6 @@
         .badge-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
         .badge-rechazado { background: rgba(234, 67, 53, 0.1); color: var(--danger); }
 
-        /* Estilo original de los botones de acción */
         .btn-action { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: white; margin-right: 3px; }
         .btn-ok { background: var(--color-blue); }
         .btn-no { background: var(--danger); }
@@ -109,7 +108,7 @@
 
 <div id="main-container" class="container">
     <div class="user-bar">
-        <div><span id="user-mail"></span> <span id="user-role" style="margin-left:10px; color:var(--color-blue); font-weight:bold;"></span></div>
+        <div><span id="user-mail"></span> <span id="user-role" style="margin-left:10px; font-weight:bold;"></span></div>
         <button onclick="logout()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Salir</button>
     </div>
 
@@ -179,8 +178,13 @@
 </div>
 
 <script>
+    // --- CONFIGURACIÓN DE PERMISOS ---
     const ADMINS = ["rojjosue@gmail.com", "josuerojas@gmail.com", "uniondeequiposderollerhockey@gmail.com"];
+    const VIEWERS = ["visor@ejemplo.com", "invitado@ejemplo.com"]; // Agrega aquí correos que solo puedan ver
+    
     let rawData = {}; 
+    let currentUserEmail = "";
+    let isEditor = false;
 
     firebase.initializeApp({
         apiKey: "AIzaSyCREXn3CyGfcSJlOLYn79vvUbgsTs4tc6c",
@@ -199,14 +203,26 @@
     function logout() { auth.signOut().then(() => location.reload()); }
 
     auth.onAuthStateChanged(user => {
-        if (user && ADMINS.includes(user.email.toLowerCase())) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-container').style.display = 'block';
-            document.getElementById('user-mail').innerText = user.email;
-            document.getElementById('user-role').innerText = "[ADMIN]";
-            escucharBaseDeDatos();
-        } else if (user) {
-            alert("No tienes permisos."); logout();
+        if (user) {
+            currentUserEmail = user.email.toLowerCase();
+            const isAdmin = ADMINS.includes(currentUserEmail);
+            const isViewer = VIEWERS.includes(currentUserEmail);
+
+            if (isAdmin || isViewer) {
+                isEditor = isAdmin; // Solo los ADMINS pueden editar
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-container').style.display = 'block';
+                document.getElementById('user-mail').innerText = currentUserEmail;
+                
+                const roleSpan = document.getElementById('user-role');
+                roleSpan.innerText = isEditor ? "[ADMINISTRADOR]" : "[SOLO LECTURA]";
+                roleSpan.style.color = isEditor ? "var(--color-blue)" : "#f1c40f";
+
+                escucharBaseDeDatos();
+            } else {
+                alert("Tu correo no tiene permisos de acceso.");
+                logout();
+            }
         }
     });
 
@@ -250,76 +266,12 @@
                 let badgeClass = r.estado === 'approved' ? 'badge-approved' : (r.estado === 'rechazado' ? 'badge-rechazado' : 'badge-pending');
                 let textoEstado = r.estado === 'rechazado' ? 'RECHAZADO' : (r.estado || 'pendiente').toUpperCase();
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirVisor('${r.fotoCarnet}')">
-                            <img src="${r.fotoPago}" class="foto-mini" onclick="abrirVisor('${r.fotoPago}')">
-                        </td>
-                        <td><strong>${r.jugadorName}</strong> <span style="color:var(--color-blue)">#${r.shirtNum || 'S/N'}</span><br><small>${r.whatsapp || ''}</small></td>
-                        <td><small>${rolesTxt.replace(/, /g, '<br>')}</small></td>
-                        <td><span class="badge ${badgeClass}">${textoEstado}</span></td>
-                        <td>
-                            <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">OK</button>
-                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'rechazado')">X</button>
-                            <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')">✎</button>
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-        document.getElementById('count-j').innerText = count;
-        document.getElementById('count-m').innerText = "$ " + money.toLocaleString();
-    }
-
-    function abrirModalEdicion(id) {
-        const r = rawData[id];
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-name').value = r.jugadorName || "";
-        document.getElementById('edit-whatsapp').value = r.whatsapp || "";
-        document.getElementById('edit-shirt').value = r.shirtNum || "";
-        document.getElementById('edit-team').value = r.teamName || (r.roles ? r.roles[0].team : "");
-        document.getElementById('edit-role').value = r.role || (r.roles ? r.roles[0].role : "");
-        document.getElementById('edit-status').value = r.estado || "pending";
-        document.getElementById('modal-edit').style.display = 'flex';
-    }
-
-    function cerrarModalEdicion() { document.getElementById('modal-edit').style.display = 'none'; }
-
-    function guardarEdicion() {
-        const id = document.getElementById('edit-id').value;
-        const upd = {
-            jugadorName: document.getElementById('edit-name').value,
-            whatsapp: document.getElementById('edit-whatsapp').value,
-            shirtNum: document.getElementById('edit-shirt').value,
-            teamName: document.getElementById('edit-team').value,
-            role: document.getElementById('edit-role').value,
-            estado: document.getElementById('edit-status').value
-        };
-        db.ref('inscripciones/' + id).update(upd).then(() => cerrarModalEdicion());
-    }
-
-    function actualizarEstado(id, estado) {
-        const msg = estado === 'approved' ? "¿Aprobar registro?" : "¿Rechazar registro?";
-        if(confirm(msg)) db.ref('inscripciones/' + id).update({ estado: estado });
-    }
-
-    function exportarCSV() {
-        let csv = "Jugador,#,WhatsApp,Equipos,Estado\n";
-        for (let id in rawData) {
-            const r = rawData[id];
-            const est = r.estado === 'rechazado' ? 'RECHAZADO' : (r.estado || 'PENDIENTE').toUpperCase();
-            csv += `"${r.jugadorName}","${r.shirtNum || ''}","${r.whatsapp || ''}","${r.teamName || ''}","${est}"\n`;
-        }
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "reporte_uerh.csv";
-        link.click();
-    }
-
-    function abrirVisor(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; }
-</script>
-</body>
-</html>
+                // Generar acciones solo si el usuario es Editor
+                let accionesHTML = isEditor ? `
+                    <td>
+                        <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">OK</button>
+                        <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'rechazado')">X</button>
+                        <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')">✎</button>
+                    </td>
+                ` : `<td><small style
 
