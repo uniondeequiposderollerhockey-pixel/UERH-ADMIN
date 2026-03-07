@@ -137,7 +137,7 @@
             <thead>
                 <tr>
                     <th>Fotos</th>
-                    <th>Jugador</th>
+                    <th>Jugador / #</th>
                     <th>Equipo / Rol</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -162,6 +162,9 @@
         
         <label>WhatsApp</label>
         <input type="text" id="edit-whatsapp">
+
+        <label>Número de Camiseta (#)</label>
+        <input type="text" id="edit-number">
 
         <div id="edit-roles-container"></div>
 
@@ -250,7 +253,10 @@
                             <img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirVisor('${r.fotoCarnet}')">
                             <img src="${r.fotoPago}" class="foto-mini" onclick="abrirVisor('${r.fotoPago}')">
                         </td>
-                        <td><strong>${r.jugadorName}</strong><br><small>${r.whatsapp || ''}</small></td>
+                        <td>
+                            <strong>${r.jugadorName}</strong> <span style="color:var(--color-blue); font-weight:bold;">#${r.numeroCamiseta || 'SN'}</span>
+                            <br><small>${r.whatsapp || ''}</small>
+                        </td>
                         <td><small>${rolesTxt.replace(/, /g, '<br>')}</small></td>
                         <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : 'badge-pending'}">${(r.estado || 'pendiente').toUpperCase()}</span></td>
                         <td>
@@ -271,12 +277,12 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = r.jugadorName;
         document.getElementById('edit-whatsapp').value = r.whatsapp || "";
+        document.getElementById('edit-number').value = r.numeroCamiseta || "";
         
         const container = document.getElementById('edit-roles-container');
         container.innerHTML = "";
 
         if (r.roles) {
-            // Caso múltiples roles
             r.roles.forEach((rol, index) => {
                 container.innerHTML += `
                     <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
@@ -291,7 +297,6 @@
                 `;
             });
         } else {
-            // Caso registro simple (compatibilidad)
             container.innerHTML = `
                 <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
                     <label>Equipo</label>
@@ -314,13 +319,15 @@
         const id = document.getElementById('edit-id').value;
         const name = document.getElementById('edit-name').value;
         const wa = document.getElementById('edit-whatsapp').value;
+        const num = document.getElementById('edit-number').value;
         const r = rawData[id];
         
         if(name.trim() === "") return alert("El nombre no puede estar vacío.");
 
         let updateData = {
             jugadorName: name,
-            whatsapp: wa
+            whatsapp: wa,
+            numeroCamiseta: num
         };
 
         if (r.roles) {
@@ -361,12 +368,12 @@
     function exportarCSV() {
         const searchName = document.getElementById('search-player').value.toLowerCase();
         const selectedTeam = document.getElementById('filter-team').value;
-        let csvContent = "data:text/csv;charset=utf-8,Jugador,WhatsApp,Equipos,Estado\n";
+        let csvContent = "data:text/csv;charset=utf-8,Jugador,#,WhatsApp,Equipos,Estado\n";
         for (let id in rawData) {
             const r = rawData[id];
             const rolesTxt = r.roles ? r.roles.map(x => `${x.team}-${x.role}`).join(' | ') : `${r.teamName}-${r.role}`;
             if (r.jugadorName.toLowerCase().includes(searchName) && (selectedTeam === "" || rolesTxt.includes(selectedTeam))) {
-                csvContent += `"${r.jugadorName}","${r.whatsapp || ''}","${rolesTxt}","${r.estado || 'pendiente'}"\n`;
+                csvContent += `"${r.jugadorName}","${r.numeroCamiseta || ''}","${r.whatsapp || ''}","${rolesTxt}","${r.estado || 'pendiente'}"\n`;
             }
         }
         const link = document.createElement("a");
