@@ -88,11 +88,12 @@
 
         .modal-content { 
             background: var(--bg-card); padding: 30px; border-radius: 15px; 
-            width: 400px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 90vh; overflow-y: auto;
         }
         .modal-content h3 { margin-top: 0; color: var(--color-blue); }
-        .modal-content label { display: block; margin: 15px 0 5px; font-size: 0.8rem; color: var(--text-muted); }
-        .modal-content input { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
+        .modal-content label { display: block; margin: 12px 0 4px; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .modal-content input, .modal-content select { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn-save { background: var(--color-blue); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .btn-cancel { background: transparent; color: #888; border: 1px solid #333; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
@@ -153,14 +154,30 @@
 
 <div id="modal-edit" class="modal-overlay">
     <div class="modal-content">
-        <h3>Editar Registro</h3>
+        <h3>Editar Datos del Jugador</h3>
         <input type="hidden" id="edit-id">
-        <label>Nombre del Jugador</label>
+        
+        <label>Nombre Completo</label>
         <input type="text" id="edit-name">
+        
         <label>WhatsApp</label>
         <input type="text" id="edit-whatsapp">
+        
         <label>Número de Camiseta (#)</label>
         <input type="text" id="edit-shirt-num">
+        
+        <label>Nombre del Equipo</label>
+        <input type="text" id="edit-team">
+        
+        <label>Rol / Posición</label>
+        <input type="text" id="edit-role">
+
+        <label>Estado del Registro</label>
+        <select id="edit-status">
+            <option value="pending">PENDIENTE</option>
+            <option value="approved">APROBADO</option>
+            <option value="rejected">RECHAZADO</option>
+        </select>
         
         <div class="modal-actions">
             <button class="btn-cancel" onclick="cerrarModalEdicion()">Cancelar</button>
@@ -248,7 +265,7 @@
                 if(r.estado === "approved") badgeClass = "badge-approved";
                 if(r.estado === "rejected") {
                     badgeClass = "badge-rejected";
-                    textoEstado = "RECHAZADO"; // Cambio visual solicitado
+                    textoEstado = "RECHAZADO";
                 }
 
                 tbody.innerHTML += `
@@ -280,9 +297,13 @@
     function abrirModalEdicion(id) {
         const r = rawData[id];
         document.getElementById('edit-id').value = id;
-        document.getElementById('edit-name').value = r.jugadorName;
+        document.getElementById('edit-name').value = r.jugadorName || "";
         document.getElementById('edit-whatsapp').value = r.whatsapp || "";
         document.getElementById('edit-shirt-num').value = r.shirtNum || "";
+        document.getElementById('edit-team').value = r.teamName || (r.roles ? r.roles[0].team : "");
+        document.getElementById('edit-role').value = r.role || (r.roles ? r.roles[0].role : "");
+        document.getElementById('edit-status').value = r.estado || "pending";
+        
         document.getElementById('modal-edit').style.display = 'flex';
     }
 
@@ -290,17 +311,18 @@
 
     function guardarEdicion() {
         const id = document.getElementById('edit-id').value;
-        const name = document.getElementById('edit-name').value;
-        const wa = document.getElementById('edit-whatsapp').value;
-        const sNum = document.getElementById('edit-shirt-num').value;
+        const updates = {
+            jugadorName: document.getElementById('edit-name').value,
+            whatsapp: document.getElementById('edit-whatsapp').value,
+            shirtNum: document.getElementById('edit-shirt-num').value,
+            teamName: document.getElementById('edit-team').value,
+            role: document.getElementById('edit-role').value,
+            estado: document.getElementById('edit-status').value
+        };
         
-        if(name.trim() === "") return alert("El nombre no puede estar vacío.");
+        if(updates.jugadorName.trim() === "") return alert("El nombre es obligatorio.");
         
-        db.ref('inscripciones/' + id).update({
-            jugadorName: name,
-            whatsapp: wa,
-            shirtNum: sNum
-        }).then(() => {
+        db.ref('inscripciones/' + id).update(updates).then(() => {
             cerrarModalEdicion();
         });
     }
@@ -312,9 +334,7 @@
             }
         } else if (accion === 'delete') {
             if(confirm("¿Deseas marcar este registro como RECHAZADO?")) {
-                db.ref('inscripciones/' + id).update({ estado: 'rejected' })
-                    .then(() => alert("Registro marcado como rechazado."))
-                    .catch(err => alert("Error: " + err.message));
+                db.ref('inscripciones/' + id).update({ estado: 'rejected' });
             }
         }
     }
@@ -327,8 +347,8 @@
             const r = rawData[id];
             const rolesTxt = r.roles ? r.roles.map(x => `${x.team}-${x.role}`).join(' | ') : `${r.teamName}-${r.role}`;
             if (r.jugadorName.toLowerCase().includes(searchName) && (selectedTeam === "" || rolesTxt.includes(selectedTeam))) {
-                let estadoTxt = r.estado === 'rejected' ? 'rechazado' : (r.estado || 'pendiente');
-                csvContent += `"${r.jugadorName}","${r.shirtNum || 'S/N'}","${r.whatsapp || ''}","${rolesTxt}","${estadoTxt}"\n`;
+                let est = r.estado === 'rejected' ? 'RECHAZADO' : (r.estado || 'PENDIENTE').toUpperCase();
+                csvContent += `"${r.jugadorName}","${r.shirtNum || 'S/N'}","${r.whatsapp || ''}","${rolesTxt}","${est}"\n`;
             }
         }
         const link = document.createElement("a");
@@ -343,4 +363,3 @@
 </script>
 </body>
 </html>
-
