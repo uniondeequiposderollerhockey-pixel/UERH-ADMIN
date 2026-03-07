@@ -89,11 +89,10 @@
         .modal-content { 
             background: var(--bg-card); padding: 30px; border-radius: 15px; 
             width: 400px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-height: 90vh; overflow-y: auto;
         }
         .modal-content h3 { margin-top: 0; color: var(--color-blue); }
         .modal-content label { display: block; margin: 15px 0 5px; font-size: 0.8rem; color: var(--text-muted); }
-        .modal-content input, .modal-content select { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
+        .modal-content input { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn-save { background: var(--color-blue); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .btn-cancel { background: transparent; color: #888; border: 1px solid #333; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
@@ -137,8 +136,7 @@
             <thead>
                 <tr>
                     <th>Fotos</th>
-                    <th>Jugador / #</th>
-                    <th>Equipo / Rol</th>
+                    <th>Jugador / #</th> <th>Equipo / Rol</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -156,18 +154,13 @@
     <div class="modal-content">
         <h3>Editar Registro</h3>
         <input type="hidden" id="edit-id">
-        
         <label>Nombre del Jugador</label>
         <input type="text" id="edit-name">
-        
         <label>WhatsApp</label>
         <input type="text" id="edit-whatsapp">
-
-        <label>Número de Camiseta (#)</label>
-        <input type="text" id="edit-number">
-
-        <div id="edit-roles-container"></div>
-
+        <label>Número de Camiseta (shirtNum)</label>
+        <input type="text" id="edit-shirt-num">
+        
         <div class="modal-actions">
             <button class="btn-cancel" onclick="cerrarModalEdicion()">Cancelar</button>
             <button class="btn-save" onclick="guardarEdicion()">Guardar Cambios</button>
@@ -247,6 +240,8 @@
             if (cumpleNombre && cumpleEquipo) {
                 count++;
                 if (r.estado === "approved") money += 1200;
+                
+                // Se agregó la visualización de shirtNum al lado del nombre
                 tbody.innerHTML += `
                     <tr>
                         <td>
@@ -254,15 +249,16 @@
                             <img src="${r.fotoPago}" class="foto-mini" onclick="abrirVisor('${r.fotoPago}')">
                         </td>
                         <td>
-                            <strong>${r.jugadorName}</strong> <span style="color:var(--color-blue); font-weight:bold;">#${r.numeroCamiseta || 'S/N'}</span>
+                            <strong>${r.jugadorName}</strong> 
+                            <span style="color:var(--color-blue); font-weight:bold; margin-left:5px;">#${r.shirtNum || 'S/N'}</span>
                             <br><small>${r.whatsapp || ''}</small>
                         </td>
                         <td><small>${rolesTxt.replace(/, /g, '<br>')}</small></td>
                         <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : 'badge-pending'}">${(r.estado || 'pendiente').toUpperCase()}</span></td>
                         <td>
                             <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')" title="Aprobar">OK</button>
-                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'delete')" title="Borrar">X</button>
-                            <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')" title="Editar Todo">✎</button>
+                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'delete')" title="Eliminar">X</button>
+                            <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')" title="Editar">✎</button>
                         </td>
                     </tr>
                 `;
@@ -277,39 +273,8 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = r.jugadorName;
         document.getElementById('edit-whatsapp').value = r.whatsapp || "";
-        document.getElementById('edit-number').value = r.numeroCamiseta || "";
-        
-        const container = document.getElementById('edit-roles-container');
-        container.innerHTML = "";
-
-        if (r.roles) {
-            r.roles.forEach((rol, index) => {
-                container.innerHTML += `
-                    <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
-                        <label>Equipo ${index + 1}</label>
-                        <input type="text" class="edit-team" value="${rol.team}">
-                        <label>Rol ${index + 1}</label>
-                        <select class="edit-role">
-                            <option value="Jugador" ${rol.role === 'Jugador' ? 'selected' : ''}>Jugador</option>
-                            <option value="Portero" ${rol.role === 'Portero' ? 'selected' : ''}>Portero</option>
-                        </select>
-                    </div>
-                `;
-            });
-        } else {
-            container.innerHTML = `
-                <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
-                    <label>Equipo</label>
-                    <input type="text" id="edit-single-team" value="${r.teamName || ''}">
-                    <label>Rol</label>
-                    <select id="edit-single-role">
-                        <option value="Jugador" ${r.role === 'Jugador' ? 'selected' : ''}>Jugador</option>
-                        <option value="Portero" ${r.role === 'Portero' ? 'selected' : ''}>Portero</option>
-                    </select>
-                </div>
-            `;
-        }
-        
+        // Carga el número de camiseta shirtNum en el modal
+        document.getElementById('edit-shirt-num').value = r.shirtNum || "";
         document.getElementById('modal-edit').style.display = 'flex';
     }
 
@@ -319,41 +284,30 @@
         const id = document.getElementById('edit-id').value;
         const name = document.getElementById('edit-name').value;
         const wa = document.getElementById('edit-whatsapp').value;
-        const num = document.getElementById('edit-number').value;
-        const r = rawData[id];
+        const sNum = document.getElementById('edit-shirt-num').value;
         
         if(name.trim() === "") return alert("El nombre no puede estar vacío.");
-
-        let updateData = {
+        
+        // Se añade shirtNum a la actualización de Firebase
+        db.ref('inscripciones/' + id).update({
             jugadorName: name,
             whatsapp: wa,
-            numeroCamiseta: num
-        };
-
-        if (r.roles) {
-            const teamsInputs = document.querySelectorAll('.edit-team');
-            const rolesSelects = document.querySelectorAll('.edit-role');
-            let nuevosRoles = [];
-            teamsInputs.forEach((input, i) => {
-                nuevosRoles.push({ team: input.value, role: rolesSelects[i].value });
-            });
-            updateData.roles = nuevosRoles;
-        } else {
-            updateData.teamName = document.getElementById('edit-single-team').value;
-            updateData.role = document.getElementById('edit-single-role').value;
-        }
-        
-        db.ref('inscripciones/' + id).update(updateData).then(() => {
+            shirtNum: sNum
+        }).then(() => {
             cerrarModalEdicion();
         });
     }
 
     function actualizarEstado(id, accion) {
         if (accion === 'approved') {
-            if(confirm("¿Aprobar este registro?")) db.ref('inscripciones/' + id).update({ estado: 'approved' });
+            if(confirm("¿Aprobar este registro?")) {
+                db.ref('inscripciones/' + id).update({ estado: 'approved' });
+            }
         } else if (accion === 'delete') {
-            if(confirm("¿ELIMINAR PERMANENTEMENTE? Esta acción no se puede deshacer.")) {
-                db.ref('inscripciones/' + id).remove();
+            if(confirm("¿ESTÁS SEGURO? Esta acción borrará al jugador permanentemente.")) {
+                db.ref('inscripciones/' + id).remove()
+                    .then(() => alert("Registro eliminado."))
+                    .catch(err => alert("Error: " + err.message));
             }
         }
     }
@@ -361,12 +315,13 @@
     function exportarCSV() {
         const searchName = document.getElementById('search-player').value.toLowerCase();
         const selectedTeam = document.getElementById('filter-team').value;
+        // Se añade la columna # al CSV
         let csvContent = "data:text/csv;charset=utf-8,Jugador,#,WhatsApp,Equipos,Estado\n";
         for (let id in rawData) {
             const r = rawData[id];
             const rolesTxt = r.roles ? r.roles.map(x => `${x.team}-${x.role}`).join(' | ') : `${r.teamName}-${r.role}`;
             if (r.jugadorName.toLowerCase().includes(searchName) && (selectedTeam === "" || rolesTxt.includes(selectedTeam))) {
-                csvContent += `"${r.jugadorName}","${r.numeroCamiseta || ''}","${r.whatsapp || ''}","${rolesTxt}","${r.estado || 'pendiente'}"\n`;
+                csvContent += `"${r.jugadorName}","${r.shirtNum || 'S/N'}","${r.whatsapp || ''}","${rolesTxt}","${r.estado || 'pendiente'}"\n`;
             }
         }
         const link = document.createElement("a");
