@@ -76,7 +76,7 @@
         .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
         .badge-approved { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
         .badge-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
-        .badge-rejected { background: rgba(234, 67, 53, 0.1); color: var(--danger); }
+        .badge-rechazado { background: rgba(234, 67, 53, 0.1); color: var(--danger); }
 
         /* Estilo original de los botones de acción */
         .btn-action { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; color: white; margin-right: 3px; }
@@ -168,7 +168,7 @@
         <select id="edit-status">
             <option value="pending">PENDIENTE</option>
             <option value="approved">APROBADO</option>
-            <option value="rejected">RECHAZADO</option>
+            <option value="rechazado">RECHAZADO</option>
         </select>
 
         <div class="modal-actions">
@@ -247,8 +247,8 @@
                 count++;
                 if (r.estado === "approved") money += 1200;
                 
-                let badgeClass = r.estado === 'approved' ? 'badge-approved' : (r.estado === 'rejected' ? 'badge-rejected' : 'badge-pending');
-                let textoEstado = r.estado === 'rejected' ? 'RECHAZADO' : (r.estado || 'pendiente').toUpperCase();
+                let badgeClass = r.estado === 'approved' ? 'badge-approved' : (r.estado === 'rechazado' ? 'badge-rechazado' : 'badge-pending');
+                let textoEstado = r.estado === 'rechazado' ? 'RECHAZADO' : (r.estado || 'pendiente').toUpperCase();
 
                 tbody.innerHTML += `
                     <tr>
@@ -261,7 +261,7 @@
                         <td><span class="badge ${badgeClass}">${textoEstado}</span></td>
                         <td>
                             <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">OK</button>
-                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'rejected')">X</button>
+                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'rechazado')">X</button>
                             <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')">✎</button>
                         </td>
                     </tr>
@@ -308,7 +308,7 @@
         let csv = "Jugador,#,WhatsApp,Equipos,Estado\n";
         for (let id in rawData) {
             const r = rawData[id];
-            const est = r.estado === 'rejected' ? 'RECHAZADO' : (r.estado || 'PENDIENTE').toUpperCase();
+            const est = r.estado === 'rechazado' ? 'RECHAZADO' : (r.estado || 'PENDIENTE').toUpperCase();
             csv += `"${r.jugadorName}","${r.shirtNum || ''}","${r.whatsapp || ''}","${r.teamName || ''}","${est}"\n`;
         }
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
