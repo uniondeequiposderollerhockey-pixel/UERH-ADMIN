@@ -89,10 +89,11 @@
         .modal-content { 
             background: var(--bg-card); padding: 30px; border-radius: 15px; 
             width: 400px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 90vh; overflow-y: auto;
         }
         .modal-content h3 { margin-top: 0; color: var(--color-blue); }
         .modal-content label { display: block; margin: 15px 0 5px; font-size: 0.8rem; color: var(--text-muted); }
-        .modal-content input { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
+        .modal-content input, .modal-content select { width: 100%; background: #0a0e17; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn-save { background: var(--color-blue); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .btn-cancel { background: transparent; color: #888; border: 1px solid #333; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
@@ -155,10 +156,15 @@
     <div class="modal-content">
         <h3>Editar Registro</h3>
         <input type="hidden" id="edit-id">
+        
         <label>Nombre del Jugador</label>
         <input type="text" id="edit-name">
+        
         <label>WhatsApp</label>
         <input type="text" id="edit-whatsapp">
+
+        <div id="edit-roles-container"></div>
+
         <div class="modal-actions">
             <button class="btn-cancel" onclick="cerrarModalEdicion()">Cancelar</button>
             <button class="btn-save" onclick="guardarEdicion()">Guardar Cambios</button>
@@ -249,8 +255,8 @@
                         <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : 'badge-pending'}">${(r.estado || 'pendiente').toUpperCase()}</span></td>
                         <td>
                             <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')" title="Aprobar">OK</button>
-                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'delete')" title="Eliminar">X</button>
-                            <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')" title="Editar">✎</button>
+                            <button class="btn-action btn-no" onclick="actualizarEstado('${id}', 'delete')" title="Borrar">X</button>
+                            <button class="btn-action btn-edit" onclick="abrirModalEdicion('${id}')" title="Editar Todo">✎</button>
                         </td>
                     </tr>
                 `;
@@ -265,6 +271,40 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = r.jugadorName;
         document.getElementById('edit-whatsapp').value = r.whatsapp || "";
+        
+        const container = document.getElementById('edit-roles-container');
+        container.innerHTML = "";
+
+        if (r.roles) {
+            // Caso múltiples roles
+            r.roles.forEach((rol, index) => {
+                container.innerHTML += `
+                    <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
+                        <label>Equipo ${index + 1}</label>
+                        <input type="text" class="edit-team" data-index="${index}" value="${rol.team}">
+                        <label>Rol ${index + 1}</label>
+                        <select class="edit-role" data-index="${index}">
+                            <option value="Jugador" ${rol.role === 'Jugador' ? 'selected' : ''}>Jugador</option>
+                            <option value="Portero" ${rol.role === 'Portero' ? 'selected' : ''}>Portero</option>
+                        </select>
+                    </div>
+                `;
+            });
+        } else {
+            // Caso registro simple (compatibilidad)
+            container.innerHTML = `
+                <div style="border-top: 1px solid #333; margin-top:15px; padding-top:10px;">
+                    <label>Equipo</label>
+                    <input type="text" id="edit-single-team" value="${r.teamName || ''}">
+                    <label>Rol</label>
+                    <select id="edit-single-role">
+                        <option value="Jugador" ${r.role === 'Jugador' ? 'selected' : ''}>Jugador</option>
+                        <option value="Portero" ${r.role === 'Portero' ? 'selected' : ''}>Portero</option>
+                    </select>
+                </div>
+            `;
+        }
+        
         document.getElementById('modal-edit').style.display = 'flex';
     }
 
@@ -274,13 +314,35 @@
         const id = document.getElementById('edit-id').value;
         const name = document.getElementById('edit-name').value;
         const wa = document.getElementById('edit-whatsapp').value;
-        if(name.trim() === "") return alert("El nombre no puede estar vacío.");
+        const r = rawData[id];
         
-        db.ref('inscripciones/' + id).update({
+        if(name.trim() === "") return alert("El nombre no puede estar vacío.");
+
+        let updateData = {
             jugadorName: name,
             whatsapp: wa
-        }).then(() => {
+        };
+
+        if (r.roles) {
+            const teamsInputs = document.querySelectorAll('.edit-team');
+            const rolesSelects = document.querySelectorAll('.edit-role');
+            let nuevosRoles = [];
+            
+            teamsInputs.forEach((input, i) => {
+                nuevosRoles.push({
+                    team: input.value,
+                    role: rolesSelects[i].value
+                });
+            });
+            updateData.roles = nuevosRoles;
+        } else {
+            updateData.teamName = document.getElementById('edit-single-team').value;
+            updateData.role = document.getElementById('edit-single-role').value;
+        }
+        
+        db.ref('inscripciones/' + id).update(updateData).then(() => {
             cerrarModalEdicion();
+            alert("Registro actualizado correctamente.");
         });
     }
 
@@ -290,10 +352,8 @@
                 db.ref('inscripciones/' + id).update({ estado: 'approved' });
             }
         } else if (accion === 'delete') {
-            if(confirm("¿ESTÁS SEGURO? Esta acción borrará al jugador permanentemente.")) {
-                db.ref('inscripciones/' + id).remove()
-                    .then(() => alert("Registro eliminado."))
-                    .catch(err => alert("Error: " + err.message));
+            if(confirm("¿ELIMINAR PERMANENTEMENTE? Esta acción no se puede deshacer.")) {
+                db.ref('inscripciones/' + id).remove();
             }
         }
     }
@@ -321,5 +381,4 @@
 </script>
 </body>
 </html>
-
 
