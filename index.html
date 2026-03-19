@@ -41,13 +41,13 @@
         }
 
         .logo-elegante {
-            font-size: 3rem; font-weight: 800; letter-spacing: 10px;
-            color: #ffffff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            font-size: 3.5rem; font-weight: 800; letter-spacing: 10px;
+            color: #ffffff; text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
             margin-bottom: 5px;
         }
 
         .sub-logo {
-            color: var(--text-muted); font-size: 0.75rem;
+            color: var(--text-muted); font-size: 0.8rem;
             letter-spacing: 5px; text-transform: uppercase; margin-bottom: 30px;
         }
 
@@ -69,6 +69,7 @@
 
         /* PANEL PRINCIPAL */
         #main-container { display: none; max-width: 1200px; margin: auto; padding: 20px; }
+        
         .user-bar { 
             background: var(--bg-card); padding: 15px; border-radius: 12px; 
             margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; 
@@ -103,11 +104,11 @@
 
 <div id="login-screen">
     <div class="logo-elegante">UERH</div>
-    <div class="sub-logo">SISTEMA CENTRAL</div>
+    <div class="sub-logo">Administración Central</div>
     <div class="login-box">
         <input type="text" id="user-input" placeholder="Usuario">
         <input type="password" id="pass-input" placeholder="Contraseña">
-        <button class="btn-login" onclick="validarIngreso()">INGRESAR</button>
+        <button class="btn-login" onclick="validarIngreso()">ENTRAR</button>
     </div>
 </div>
 
@@ -120,7 +121,8 @@
     <div class="nav-tabs">
         <div class="nav-link active" onclick="switchTab('tab-inscripciones', this)">Inscripciones</div>
         <div class="nav-link" onclick="switchTab('tab-plantilla', this)">Plantilla</div>
-        <div class="nav-link" onclick="switchTab('tab-data', this)">Configuración</div>
+        <div class="nav-link" onclick="switchTab('tab-data', this)">Data Config</div>
+        <div class="nav-link" onclick="switchTab('tab-usuarios', this)">Usuarios</div>
     </div>
 
     <div id="tab-inscripciones" class="section-panel active">
@@ -149,6 +151,15 @@
             </table>
         </div>
     </div>
+
+    <div id="tab-usuarios" class="section-panel">
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Email Whitelist</th><th>Rol</th><th>Acción</th></tr></thead>
+                <tbody id="users-table"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -163,6 +174,9 @@
 
     let currentUser = null;
     let rawData = {};
+
+    const mapaRoles = { "Jugador": "JG", "Capitán": "C", "Asistente": "A", "Golero 1": "G1", "Golero 2": "G2", "Golero 3": "G3" };
+    function obtenerSigla(r) { return mapaRoles[r] || "JG"; }
 
     function validarIngreso() {
         const u = document.getElementById('user-input').value;
@@ -183,12 +197,12 @@
         document.getElementById('main-container').style.display = 'block';
         document.getElementById('display-name').innerText = nombre;
         
-        cargarDatos();
+        escucharDatos();
     }
 
     function cerrarSesion() { location.reload(); }
 
-    function cargarDatos() {
+    function escucharDatos() {
         db.ref('inscripciones').on('value', snap => {
             rawData = snap.val() || {};
             renderizarInscripciones();
@@ -202,6 +216,14 @@
                 tbody.innerHTML += `<tr><td>${j.equipo}</td><td>${j.info}</td></tr>`;
             });
         });
+
+        db.ref('whitelist').on('value', snap => {
+            const tbody = document.getElementById('users-table');
+            tbody.innerHTML = "";
+            Object.values(snap.val() || {}).forEach(u => {
+                tbody.innerHTML += `<tr><td>${u.email}</td><td>${(u.role || 'viewer').toUpperCase()}</td><td>---</td></tr>`;
+            });
+        });
     }
 
     function renderizarInscripciones() {
@@ -211,7 +233,7 @@
             const r = rawData[id];
             const btn = currentUser.rol === 'admin' && r.estado !== 'approved'
                 ? `<button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button>`
-                : `<small style="color:gray">${r.estado === 'approved' ? 'LISTO' : 'SOLO LECTURA'}</small>`;
+                : `<small style="color:gray">${r.estado === 'approved' ? 'LISTO' : 'LECTURA'}</small>`;
 
             tbody.innerHTML += `<tr>
                 <td><img src="${r.fotoCarnet}" class="foto-mini"></td>
@@ -231,7 +253,7 @@
                 tbody.innerHTML += `<tr>
                     <td><img src="${r.fotoCarnet}" class="foto-mini"></td>
                     <td>${r.jugadorName}</td><td>${r.teamName}</td>
-                    <td>#${r.shirtNum || ''}</td><td>${r.role || 'JG'}</td>
+                    <td>#${r.shirtNum || ''}</td><td>${obtenerSigla(r.role)}</td>
                 </tr>`;
             }
         }
@@ -240,10 +262,8 @@
     function aprobar(id) {
         if (currentUser.rol !== 'admin') return;
         const r = rawData[id];
-        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (${r.role || 'JG'})`;
-        
+        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (${obtenerSigla(r.role)})`;
         db.ref('inscripciones/' + id).update({ estado: 'approved' });
-        
         db.ref('config/jugadores').once('value', snap => {
             let actual = Object.values(snap.val() || {});
             actual.push({ equipo: r.teamName || 'Sin Equipo', info: infoFinal });
