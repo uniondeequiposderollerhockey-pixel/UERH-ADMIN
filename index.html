@@ -18,10 +18,36 @@
 
         @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-dark); color: var(--text-main); }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; 
+            background-color: var(--bg-dark); color: var(--text-main);
+            min-height: 100vh;
+        }
 
-        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        /* DISEÑO PANTALLA LOGIN */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; 
+        }
         
+        /* LETRAS UERH ELEGANTES */
+        .logo-elegante {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: 8px;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            margin-bottom: 5px;
+        }
+        
+        .sub-logo {
+            color: var(--text-muted);
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
         .btn-google {
             background: #ffffff; color: #000; display: flex; align-items: center; gap: 12px; 
             padding: 12px 24px; font-weight: 600; cursor: pointer; position: relative;
@@ -34,6 +60,7 @@
         }
         @keyframes rotateBorder { to { --angle: 360deg; } }
 
+        /* PANEL PRINCIPAL */
         #main-container { display: none; max-width: 1100px; margin: auto; padding: 20px; }
         .user-bar { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
         
@@ -44,7 +71,7 @@
         .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         table { width: 100%; border-collapse: collapse; }
         th { background: #161b28; color: var(--color-blue); padding: 15px; text-align: left; font-size: 0.7rem; text-transform: uppercase; }
-        td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.9rem; }
+        td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
         .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
         .btn-ok { background: var(--success); }
@@ -61,10 +88,8 @@
 <body>
 
 <div id="login-screen">
-    <h1 style="margin-bottom:10px; font-size: 2.5rem;">
-        <span style="color: #4285F4">U</span><span style="color: #EA4335">E</span><span style="color: #FBBC05">R</span><span style="color: #34A853">H</span>
-        <span style="color: var(--text-muted); font-weight: 300;">ADMIN</span>
-    </h1>
+    <div class="logo-elegante">UERH</div>
+    <div class="sub-logo">Administración</div>
     <button onclick="iniciarSesion()" class="btn-google">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
         Ingresar con Google
@@ -73,8 +98,8 @@
 
 <div id="main-container">
     <div class="user-bar">
-        <div>Admin: <span id="user-display" style="color:var(--color-blue); font-weight: bold;"></span></div>
-        <button onclick="cerrarSesion()" class="btn-action btn-logout">Cerrar Sesión</button>
+        <div>Usuario: <span id="user-display" style="color:var(--color-blue); font-weight: bold;"></span></div>
+        <button onclick="cerrarSesion()" class="btn-action btn-logout">Salir</button>
     </div>
 
     <div class="nav-tabs">
@@ -134,28 +159,22 @@
     function verificarAcceso(user) {
         const email = user.email.toLowerCase().trim();
         
-        db.ref('whitelist').once('value', snap => {
-            const whitelist = snap.val() || {};
-            const entry = Object.values(whitelist).find(u => u.email && u.email.toLowerCase().trim() === email);
+        // ACCESO DIRECTO PARA TUS MAILS
+        if (email === 'rojjosue@gmail.com' || email === 'uniondeequiposderollerhockey@gmail.com') {
+            userRole = 'admin';
+        } else if (email === 'cx6cav@gmail.com') {
+            userRole = 'viewer';
+        } else {
+            // Si no es ninguno de los anteriores, cerramos sesión
+            alert("Acceso no autorizado.");
+            auth.signOut();
+            return;
+        }
 
-            // LOGICA DE ACCESO REFORZADA
-            if (email === 'rojjosue@gmail.com' || email === 'uniondeequiposderollerhockey@gmail.com') {
-                userRole = 'admin';
-            } else if (email === 'cx6cav@gmail.com' || (entry && entry.role === 'viewer')) {
-                userRole = 'viewer';
-            } else if (entry && entry.role === 'admin') {
-                userRole = 'admin';
-            } else {
-                alert("Acceso denegado para: " + email);
-                auth.signOut();
-                return;
-            }
-
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-container').style.display = 'block';
-            document.getElementById('user-display').innerText = user.displayName;
-            inicializarApp();
-        });
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        document.getElementById('user-display').innerText = user.displayName;
+        inicializarApp();
     }
 
     function inicializarApp() {
@@ -200,7 +219,8 @@
         db.ref('inscripciones/' + id).update({ estado: 'approved' });
         
         db.ref('config/jugadores').once('value', snap => {
-            let actual = Object.values(snap.val() || {});
+            let actual = snap.val() || [];
+            if (!Array.isArray(actual)) actual = Object.values(actual);
             actual.push({ equipo: r.teamName || 'Sin Equipo', info: infoFinal });
             db.ref('config/jugadores').set(actual);
         });
