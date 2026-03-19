@@ -20,13 +20,12 @@
 
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-dark); color: var(--text-main); }
 
-        /* PANTALLA LOGIN */
         #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         
         .btn-google {
             background: #ffffff; color: #000; display: flex; align-items: center; gap: 12px; 
             padding: 12px 24px; font-weight: 600; cursor: pointer; position: relative;
-            border: none; border-radius: 10px; z-index: 1;
+            border: none; border-radius: 10px; z-index: 1; text-transform: uppercase;
         }
         .btn-google::before {
             content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
@@ -35,25 +34,24 @@
         }
         @keyframes rotateBorder { to { --angle: 360deg; } }
 
-        /* PANEL PRINCIPAL */
         #main-container { display: none; max-width: 1100px; margin: auto; padding: 20px; }
-        .user-bar { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .user-bar { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
         
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .nav-link { color: var(--text-muted); cursor: pointer; padding: 8px 15px; border-radius: 6px; }
         .nav-link.active { background: var(--color-blue); color: white; }
 
-        .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; }
+        .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #161b28; color: var(--color-blue); padding: 15px; text-align: left; font-size: 0.7rem; }
-        td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        th { background: #161b28; color: var(--color-blue); padding: 15px; text-align: left; font-size: 0.7rem; text-transform: uppercase; }
+        td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.9rem; }
 
-        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; color: white; }
+        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
         .btn-ok { background: var(--success); }
         .btn-logout { background: transparent; border: 1px solid #333; color: #888; }
         
         .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; }
-        .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
         .badge-approved { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
         
         .section-panel { display: none; }
@@ -63,23 +61,25 @@
 <body>
 
 <div id="login-screen">
-    <h1 style="margin-bottom:20px;">UERH ADMIN</h1>
+    <h1 style="margin-bottom:10px; font-size: 2.5rem;">
+        <span style="color: #4285F4">U</span><span style="color: #EA4335">E</span><span style="color: #FBBC05">R</span><span style="color: #34A853">H</span>
+        <span style="color: var(--text-muted); font-weight: 300;">ADMIN</span>
+    </h1>
     <button onclick="iniciarSesion()" class="btn-google">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-        INGRESAR CON GOOGLE
+        Ingresar con Google
     </button>
 </div>
 
 <div id="main-container">
     <div class="user-bar">
-        <div>Hola, <span id="user-display" style="color:var(--color-blue);"></span> 
-             <small id="user-role" style="color:var(--text-muted); margin-left:10px;"></small></div>
-        <button onclick="cerrarSesion()" class="btn-action btn-logout">Salir</button>
+        <div>Admin: <span id="user-display" style="color:var(--color-blue); font-weight: bold;"></span></div>
+        <button onclick="cerrarSesion()" class="btn-action btn-logout">Cerrar Sesión</button>
     </div>
 
     <div class="nav-tabs">
         <div class="nav-link active" onclick="switchTab('tab-inscripciones', this)">Inscripciones</div>
-        <div class="nav-link" onclick="switchTab('tab-data', this)">Configuración</div>
+        <div class="nav-link" onclick="switchTab('tab-data', this)">Data Config</div>
     </div>
 
     <div id="tab-inscripciones" class="section-panel active">
@@ -94,7 +94,7 @@
     <div id="tab-data" class="section-panel">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Equipo</th><th>Información</th></tr></thead>
+                <thead><tr><th>Equipo</th><th>Info Generada</th></tr></thead>
                 <tbody id="data-table-body"></tbody>
             </table>
         </div>
@@ -117,7 +117,7 @@
     const db = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    let userRole = 'viewer'; // Por defecto solo ver
+    let userRole = 'viewer'; 
     let rawData = {};
 
     function iniciarSesion() { auth.signInWithPopup(provider); }
@@ -132,22 +132,29 @@
     });
 
     function verificarAcceso(user) {
+        const email = user.email.toLowerCase().trim();
+        
         db.ref('whitelist').once('value', snap => {
-            const data = snap.val() || {};
-            // Buscamos el objeto del usuario por email
-            const entry = Object.values(data).find(u => u.email.toLowerCase() === user.email.toLowerCase());
-            
-            if (entry) {
-                userRole = entry.role || 'viewer';
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-container').style.display = 'block';
-                document.getElementById('user-display').innerText = user.displayName;
-                document.getElementById('user-role').innerText = `(${userRole.toUpperCase()})`;
-                inicializarApp();
+            const whitelist = snap.val() || {};
+            const entry = Object.values(whitelist).find(u => u.email && u.email.toLowerCase().trim() === email);
+
+            // LOGICA DE ACCESO REFORZADA
+            if (email === 'rojjosue@gmail.com' || email === 'uniondeequiposderollerhockey@gmail.com') {
+                userRole = 'admin';
+            } else if (email === 'cx6cav@gmail.com' || (entry && entry.role === 'viewer')) {
+                userRole = 'viewer';
+            } else if (entry && entry.role === 'admin') {
+                userRole = 'admin';
             } else {
-                alert("Tu correo no está autorizado.");
+                alert("Acceso denegado para: " + email);
                 auth.signOut();
+                return;
             }
+
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            document.getElementById('user-display').innerText = user.displayName;
+            inicializarApp();
         });
     }
 
@@ -170,10 +177,9 @@
         tbody.innerHTML = "";
         for (let id in rawData) {
             const r = rawData[id];
-            // Solo mostramos el botón de aprobación si es admin
-            const btnAprobar = userRole === 'admin' 
+            const btn = userRole === 'admin' 
                 ? `<button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button>` 
-                : `<span style="color:gray; font-size:10px;">Lectura</span>`;
+                : `<small style="color:gray">Solo lectura</small>`;
 
             tbody.innerHTML += `
                 <tr>
@@ -181,13 +187,13 @@
                     <td>${r.jugadorName} <b>#${r.shirtNum || ''}</b></td>
                     <td>${r.teamName || '---'}</td>
                     <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : ''}">${(r.estado || 'pen').toUpperCase()}</span></td>
-                    <td>${btnAprobar}</td>
+                    <td>${btn}</td>
                 </tr>`;
         }
     }
 
     function aprobar(id) {
-        if (userRole !== 'admin') return alert("No tienes permisos para modificar.");
+        if (userRole !== 'admin') return;
         const r = rawData[id];
         const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (JG)`;
         
