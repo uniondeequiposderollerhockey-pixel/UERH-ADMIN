@@ -16,123 +16,44 @@
             --color-blue: #4285f4;
         }
 
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; 
-            background-color: var(--bg-dark); color: var(--text-main);
-            min-height: 100vh;
-        }
+        @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 
-        /* DISEÑO PANTALLA LOGIN */
-        #login-screen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; background: radial-gradient(circle at 50% 40%, rgba(66,133,244,0.1) 0%, rgba(10,14,23,1) 70%);
-        }
-        .login-card {
-            background: var(--bg-card); padding: 40px; border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.05); text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-dark); color: var(--text-main); }
 
-        /* --- ACTUALIZACIÓN: BOTÓN GOOGLE CON BORDE DEGRADADO ANIMADO --- */
+        /* PANTALLA LOGIN */
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         
-        /* Definimos una propiedad CSS personalizada para la animación del ángulo */
-        @property --angle {
-          syntax: '<angle>';
-          initial-value: 0deg;
-          inherits: false;
-        }
-
         .btn-google {
-            /* Estilos base del botón */
-            background: #ffffff; /* Fondo blanco del botón */
-            color: #000000;      /* Texto negro */
-            display: flex; align-items: center; gap: 12px; 
-            margin: 25px auto;
-            padding: 12px 24px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            
-            /* Importante para el posicionamiento del borde */
-            position: relative;
-            border: none; /* Quitamos el borde CSS estándar */
-            border-radius: 10px; /* Radio de borde del botón */
-            
-            /* Evitamos que el pseudoelemento del borde se superponga al texto/icono */
-            z-index: 1; 
+            background: #ffffff; color: #000; display: flex; align-items: center; gap: 12px; 
+            padding: 12px 24px; font-weight: 600; cursor: pointer; position: relative;
+            border: none; border-radius: 10px; z-index: 1;
         }
-
-        /* Pseudoelemento para crear el borde degradado */
         .btn-google::before {
-            content: '';
-            position: absolute;
-            /* Ajustamos para que sea ligeramente más grande que el botón y actúe como borde */
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            
-            /* Radio de borde ligeramente mayor para el efecto visual */
-            border-radius: 11px; 
-            
-            /* Degradado cónico con los colores: Azul, Blanco, Rojo */
-            background-image: conic-gradient(from var(--angle), #4285F4, #ffffff, #EA4335, #4285F4);
-            
-            /* Colocamos el borde detrás del contenido del botón */
-            z-index: -1;
-            
-            /* Aplicamos la animación de rotación continua */
-            animation: rotateBorder 4s linear infinite;
+            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 11px; background-image: conic-gradient(from var(--angle), #4285F4, #ffffff, #EA4335, #4285F4);
+            z-index: -1; animation: rotateBorder 4s linear infinite;
         }
+        @keyframes rotateBorder { to { --angle: 360deg; } }
 
-        /* Pseudoelemento opcional para dar un efecto de brillo/resplandor de fondo */
-        .btn-google::after {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 11px;
-            background-image: conic-gradient(from var(--angle), #4285F4, #ffffff, #EA4335, #4285F4);
-            z-index: -2;
-            filter: blur(10px); /* Desenfocamos para el efecto neon */
-            opacity: 0.3; /* Opacidad baja para que sea sutil */
-            animation: rotateBorder 4s linear infinite;
-        }
-
-        /* Animación clave que rota el ángulo del degradado */
-        @keyframes rotateBorder {
-            to {
-                --angle: 360deg;
-            }
-        }
-
-        /* Efecto hover sutil */
-        .btn-google:hover {
-            transform: scale(1.02);
-            transition: transform 0.2s ease;
-        }
-        .btn-google:hover::after {
-            opacity: 0.5; /* Aumentamos el brillo al pasar el mouse */
-        }
-
-        /* ----------------------------------------------------------------- */
-
-        /* CONTENEDOR PRINCIPAL (Oculto por defecto) */
+        /* PANEL PRINCIPAL */
         #main-container { display: none; max-width: 1100px; margin: auto; padding: 20px; }
-
-        .user-bar { background: var(--bg-card); padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .nav-link { color: var(--text-muted); cursor: pointer; padding: 8px 15px; border-radius: 6px; font-size: 0.9rem; }
+        .user-bar { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-link { color: var(--text-muted); cursor: pointer; padding: 8px 15px; border-radius: 6px; }
         .nav-link.active { background: var(--color-blue); color: white; }
 
-        .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;}
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #161b28; color: var(--color-blue); text-align: left; padding: 15px; text-transform: uppercase; font-size: 0.7rem; }
+        .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #161b28; color: var(--color-blue); padding: 15px; text-align: left; font-size: 0.7rem; }
         td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
-        .btn-action { border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; }
-        .btn-logout { background: transparent; border: 1px solid #333; color: #888; padding: 5px 12px; }
+        .btn-action { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; color: white; }
         .btn-ok { background: var(--success); }
+        .btn-logout { background: transparent; border: 1px solid #333; color: #888; }
         
-        .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; cursor: pointer; }
-        .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
         .badge-approved { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
         
         .section-panel { display: none; }
@@ -142,32 +63,29 @@
 <body>
 
 <div id="login-screen">
-    <div class="login-card">
-        <h1 style="color:var(--color-blue); margin-bottom:10px;">UERH ADMIN</h1>
-        <p style="color:var(--text-muted);">Inicia sesión para gestionar la liga</p>
-        
-        <button onclick="iniciarSesion()" class="btn-google">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-            Continuar con Google
-        </button>
-    </div>
+    <h1 style="margin-bottom:20px;">UERH ADMIN</h1>
+    <button onclick="iniciarSesion()" class="btn-google">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+        INGRESAR CON GOOGLE
+    </button>
 </div>
 
 <div id="main-container">
     <div class="user-bar">
-        <div><span id="user-display" style="font-weight:bold; color:var(--color-blue);">Cargando...</span></div>
-        <button onclick="cerrarSesion()" class="btn-action btn-logout">Cerrar Sesión</button>
+        <div>Hola, <span id="user-display" style="color:var(--color-blue);"></span> 
+             <small id="user-role" style="color:var(--text-muted); margin-left:10px;"></small></div>
+        <button onclick="cerrarSesion()" class="btn-action btn-logout">Salir</button>
     </div>
 
     <div class="nav-tabs">
         <div class="nav-link active" onclick="switchTab('tab-inscripciones', this)">Inscripciones</div>
-        <div class="nav-link" onclick="switchTab('tab-data', this)">Data (Config)</div>
+        <div class="nav-link" onclick="switchTab('tab-data', this)">Configuración</div>
     </div>
 
     <div id="tab-inscripciones" class="section-panel active">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Foto</th><th>Jugador</th><th>Equipo/Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Foto</th><th>Jugador</th><th>Equipo</th><th>Estado</th><th>Acción</th></tr></thead>
                 <tbody id="main-table"></tbody>
             </table>
         </div>
@@ -176,7 +94,7 @@
     <div id="tab-data" class="section-panel">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Equipo</th><th>Info (Letras C/A)</th></tr></thead>
+                <thead><tr><th>Equipo</th><th>Información</th></tr></thead>
                 <tbody id="data-table-body"></tbody>
             </table>
         </div>
@@ -184,7 +102,6 @@
 </div>
 
 <script>
-    // Configuración de Firebase (Se mantiene igual)
     const firebaseConfig = {
         apiKey: "AIzaSyCREXn3CyGfcSJlOLYn79vvUbgsTs4tc6c",
         authDomain: "uerh-t2026.firebaseapp.com",
@@ -200,49 +117,38 @@
     const db = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
+    let userRole = 'viewer'; // Por defecto solo ver
     let rawData = {};
-    const mapaRoles = { "Jugador": "JG", "Capitán": "C", "Asistente": "A", "Golero 1": "G1", "Golero 2": "G2" };
 
-    // --- LÓGICA DE AUTENTICACIÓN (Se mantiene igual) ---
-    function iniciarSesion() {
-        auth.signInWithPopup(provider).catch(err => alert("Error al conectar con Google"));
-    }
-
-    function cerrarSesion() {
-        auth.signOut();
-    }
+    function iniciarSesion() { auth.signInWithPopup(provider); }
+    function cerrarSesion() { auth.signOut(); }
 
     auth.onAuthStateChanged(user => {
-        if (user) {
-            verificarWhitelist(user);
-        } else {
+        if (user) { verificarAcceso(user); } 
+        else {
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-container').style.display = 'none';
         }
     });
 
-    function verificarWhitelist(user) {
+    function verificarAcceso(user) {
         db.ref('whitelist').once('value', snap => {
-            const list = snap.val() || {};
-            const emails = Object.values(list).map(u => u.email.toLowerCase());
+            const data = snap.val() || {};
+            // Buscamos el objeto del usuario por email
+            const entry = Object.values(data).find(u => u.email.toLowerCase() === user.email.toLowerCase());
             
-            if (emails.includes(user.email.toLowerCase())) {
+            if (entry) {
+                userRole = entry.role || 'viewer';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-container').style.display = 'block';
                 document.getElementById('user-display').innerText = user.displayName;
+                document.getElementById('user-role').innerText = `(${userRole.toUpperCase()})`;
                 inicializarApp();
             } else {
-                alert("Acceso no autorizado");
+                alert("Tu correo no está autorizado.");
                 auth.signOut();
             }
         });
-    }
-
-    // --- LÓGICA DE NEGOCIO (Se mantiene igual) ---
-    function obtenerSiglaRol(rolLargo) {
-        if (!rolLargo) return "JG";
-        let limpio = rolLargo.replace(/[()]/g, '').trim();
-        return mapaRoles[limpio] || limpio;
     }
 
     function inicializarApp() {
@@ -253,8 +159,7 @@
         db.ref('config/jugadores').on('value', snap => {
             const tbody = document.getElementById('data-table-body');
             tbody.innerHTML = "";
-            const list = snap.val() || [];
-            Object.values(list).forEach(j => {
+            Object.values(snap.val() || {}).forEach(j => {
                 tbody.innerHTML += `<tr><td>${j.equipo}</td><td>${j.info}</td></tr>`;
             });
         });
@@ -265,29 +170,31 @@
         tbody.innerHTML = "";
         for (let id in rawData) {
             const r = rawData[id];
-            const sigla = obtenerSiglaRol(r.roles ? r.roles[0].role : "Jugador");
+            // Solo mostramos el botón de aprobación si es admin
+            const btnAprobar = userRole === 'admin' 
+                ? `<button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button>` 
+                : `<span style="color:gray; font-size:10px;">Lectura</span>`;
+
             tbody.innerHTML += `
                 <tr>
                     <td><img src="${r.fotoCarnet}" class="foto-mini"></td>
                     <td>${r.jugadorName} <b>#${r.shirtNum || ''}</b></td>
-                    <td>${r.teamName || '---'}<br><small>(${sigla})</small></td>
+                    <td>${r.teamName || '---'}</td>
                     <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : ''}">${(r.estado || 'pen').toUpperCase()}</span></td>
-                    <td><button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button></td>
+                    <td>${btnAprobar}</td>
                 </tr>`;
         }
     }
 
     function aprobar(id) {
+        if (userRole !== 'admin') return alert("No tienes permisos para modificar.");
         const r = rawData[id];
-        const sigla = obtenerSiglaRol(r.roles ? r.roles[0].role : "Jugador");
-        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`;
+        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (JG)`;
         
         db.ref('inscripciones/' + id).update({ estado: 'approved' });
         
-        // Sincronizar a Config con la sigla limpia
         db.ref('config/jugadores').once('value', snap => {
-            let actual = snap.val() || [];
-            if (!Array.isArray(actual)) actual = Object.values(actual);
+            let actual = Object.values(snap.val() || {});
             actual.push({ equipo: r.teamName || 'Sin Equipo', info: infoFinal });
             db.ref('config/jugadores').set(actual);
         });
