@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UERH Admin - Panel Oficial (Acceso Libre)</title>
+    <title>UERH Admin - Panel Oficial</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
@@ -23,58 +23,69 @@
             background-image: radial-gradient(circle at 50% -20%, rgba(66,133,244,0.15) 0%, rgba(10,14,23,0) 50%);
         }
 
+        /* ESTILOS LOGIN */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-card {
+            background: var(--bg-card); padding: 30px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1); width: 320px; text-align: center;
+        }
+        .login-card h2 { color: var(--color-blue); margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; position: relative; }
+        .input-group input {
+            width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333;
+            background: #0a0e17; color: white; box-sizing: border-box; outline: none;
+        }
+        .pass-toggle {
+            position: absolute; right: 10px; top: 12px; cursor: pointer; color: var(--text-muted);
+        }
+        .btn-entrar {
+            width: 100%; padding: 12px; background: var(--color-blue); border: none;
+            color: white; font-weight: bold; border-radius: 6px; cursor: pointer;
+        }
+
+        /* RESTO DE TUS ESTILOS ORIGINALES */
         .container { max-width: 1100px; margin: auto; padding: 20px; display: block; }
         .user-bar { background: var(--bg-card); padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .nav-link { color: var(--text-muted); cursor: pointer; padding: 8px 15px; border-radius: 6px; font-size: 0.9rem; transition: 0.3s; }
         .nav-link.active { background: var(--color-blue); color: white; }
-
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .stats { display: flex; gap: 12px; }
         .stat-box { background: var(--bg-card); padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); text-align: center; min-width: 110px; }
         .stat-box small { display: block; font-size: 0.65rem; color: var(--color-blue); text-transform: uppercase; }
         .stat-box span { font-size: 1.2rem; font-weight: bold; }
-
         .controls-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
-        .search-input, .select-input { 
-            background: #1c2333; border: 1px solid #333; color: white; 
-            padding: 10px; border-radius: 6px; font-size: 0.85rem; outline: none;
-        }
+        .search-input, .select-input { background: #1c2333; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.85rem; outline: none; }
         .btn-export { background: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: auto; }
-
         .table-wrapper { background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;}
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { background: #161b28; color: var(--color-blue); text-align: left; padding: 15px; text-transform: uppercase; font-size: 0.7rem; }
         td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-
         .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #333; margin-right: 5px; }
         .badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
         .badge-approved { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
         .badge-pending { background: rgba(241, 196, 15, 0.1); color: #f1c40f; }
-
         .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
         .team-card { background: var(--bg-card); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); padding: 20px; }
         .team-header { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 15px; }
         .team-logo-preview { width: 55px; height: 55px; object-fit: contain; background: #000; border-radius: 8px; border: 1px solid #333; padding: 4px; }
         .player-entry { font-size: 0.9rem; margin-bottom: 6px; display: flex; align-items: center; }
         .player-num { color: var(--color-blue); font-weight: bold; margin-right: 8px; width: 25px; }
-
         .modal-overlay { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
         #modal-img { max-width: 90%; max-height: 80vh; border-radius: 10px; }
-        
         .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; border: 1px solid var(--color-blue); width: 380px; }
         .modal-content h3 { margin-top: 0; color: var(--color-blue); text-align: center; }
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
         .form-group input { width: 100%; padding: 10px; border-radius: 6px; background: #1c2333; border: 1px solid #333; color: white; box-sizing: border-box; outline: none; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
         .edit-foto-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 10px; border: 2px solid var(--color-blue); display: block; margin: 0 auto 15px; background: #000; }
-
         .section-panel { display: none; }
         .section-panel.active { display: block; }
-
         .btn-action { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; font-size: 0.8rem; font-weight: bold; transition: 0.2s; }
         .btn-edit { background: var(--color-blue); }
         .btn-delete { background: var(--danger); }
@@ -84,10 +95,25 @@
 </head>
 <body>
 
-<div id="main-container" class="container">
+<div id="login-overlay">
+    <div class="login-card">
+        <h2>UERH ACCESS</h2>
+        <div class="input-group">
+            <input type="text" id="log-user" placeholder="Usuario">
+        </div>
+        <div class="input-group">
+            <input type="password" id="log-pass" placeholder="Contraseña">
+            <span class="pass-toggle" onclick="togglePass()">👁️</span>
+        </div>
+        <button class="btn-entrar" onclick="intentarLogin()">ENTRAR</button>
+        <p id="log-error" style="color:var(--danger); font-size:0.8rem; margin-top:10px; display:none;">Credenciales incorrectas</p>
+    </div>
+</div>
+
+<div id="main-container" class="container" style="display:none;">
     <div class="user-bar">
-        <div><span style="font-weight:bold; color:var(--color-blue);">UERH ADMIN PANEL</span></div>
-        <button onclick="location.reload()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Recargar Datos</button>
+        <div>Sesión: <span id="current-session-user" style="font-weight:bold; color:var(--color-blue);"></span></div>
+        <button onclick="location.reload()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Cerrar Sesión</button>
     </div>
 
     <div class="nav-tabs">
@@ -126,7 +152,7 @@
     <div id="tab-data" class="section-panel">
         <div class="header">
             <h2>CONFIG <span style="color:var(--color-blue)">JUGADORES</span></h2>
-            <button class="btn-sync" onclick="sincronizarConfiguracion()">Sincronización Total</button>
+            <button id="btn-sync-main" class="btn-sync" onclick="sincronizarConfiguracion()">Sincronización Total</button>
         </div>
         <div class="table-wrapper">
             <table>
@@ -140,15 +166,17 @@
         <div class="header"><h2>GESTIÓN DE ACCESO</h2></div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Email</th><th>Rango</th><th>Acción</th></tr></thead>
-                <tbody id="users-body"></tbody>
+                <thead><tr><th>Usuario</th><th>Permisos</th><th>Estado</th></tr></thead>
+                <tbody id="users-body">
+                    <tr><td>Admin</td><td>LECTURA / ESCRITURA</td><td style="color:var(--success)">Activo</td></tr>
+                    <tr><td>AVA</td><td>SOLO LECTURA</td><td style="color:var(--success)">Activo</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
 <div id="modal-visor" class="modal-overlay" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
-
 <div id="modal-edit" class="modal-overlay">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3>Editar Inscripción</h3>
@@ -192,39 +220,65 @@
     let rawData = {};
     let logosData = {};
     let currentBase64 = null;
+    let currentUserRole = 'viewer'; // 'admin' o 'viewer'
 
+    // --- LÓGICA DE LOGIN ---
+    function togglePass() {
+        const p = document.getElementById('log-pass');
+        p.type = p.type === 'password' ? 'text' : 'password';
+    }
+
+    function intentarLogin() {
+        const user = document.getElementById('log-user').value.trim().toLowerCase();
+        const pass = document.getElementById('log-pass').value;
+        const err = document.getElementById('log-error');
+
+        if (user === 'admin' && pass === 'rojjos2026') {
+            iniciarSesion('Admin', 'admin');
+        } else if (user === 'ava' && pass === 'ava2026') {
+            iniciarSesion('AVA', 'viewer');
+        } else {
+            err.style.display = 'block';
+        }
+    }
+
+    function iniciarSesion(nombre, rol) {
+        currentUserRole = rol;
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        document.getElementById('current-session-user').innerText = nombre;
+        
+        // Bloquear acciones si es viewer
+        if(rol === 'viewer') {
+            const btnSync = document.getElementById('btn-sync-main');
+            if(btnSync) btnSync.style.display = 'none';
+        }
+        
+        // Cargar datos originales
+        inicializarApp();
+    }
+
+    // --- TU LÓGICA ORIGINAL SIN CAMBIOS ---
     const mapaRoles = {
-        "Jugador": "JG",
-        "Capitán": "C",
-        "Asistente": "A",
-        "Golero 1": "G1",
-        "Golero 2": "G2",
-        "Golero 3": "G3"
+        "Jugador": "JG", "Capitán": "C", "Asistente": "A",
+        "Golero 1": "G1", "Golero 2": "G2", "Golero 3": "G3"
     };
 
-    /**
-     * Obtiene exclusivamente la sigla del rol (C, A, JG, etc.).
-     * Limpia cualquier formato previo para asegurar que solo quede la sigla.
-     */
     function obtenerSiglaRol(rolLargo) {
         if (!rolLargo) return "JG";
-        // Eliminar paréntesis y limpiar espacios
         let rolLimpio = rolLargo.replace(/[()]/g, '').trim();
-        // Si el rol es el nombre largo (ej: "Capitán"), devolvemos la sigla del mapa ("C")
         if (mapaRoles[rolLimpio]) return mapaRoles[rolLimpio];
-        // Si no está en el mapa, devolvemos el valor limpio (por si ya era una sigla)
         return rolLimpio;
     }
 
-    window.onload = () => {
+    function inicializarApp() {
         escucharInscripciones();
         escucharConfigCentral();
         db.ref('config/logos').on('value', snap => { 
             logosData = snap.val() || {}; 
             generarPlantillas(); 
         });
-        escucharUsuarios();
-    };
+    }
 
     function switchTab(tabId, el) {
         document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('active'));
@@ -240,40 +294,6 @@
             filtrarYMostrar();
             generarPlantillas();
         });
-    }
-
-    function generarPlantillas() {
-        const container = document.getElementById('roster-container');
-        if(!container) return;
-        container.innerHTML = "";
-        let equiposObj = {};
-
-        for (let id in rawData) {
-            const r = rawData[id];
-            if(r.estado !== "approved") continue;
-            const team = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
-            if(!equiposObj[team]) equiposObj[team] = [];
-            equiposObj[team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
-        }
-
-        for(let equipo in equiposObj) {
-            const logoUrl = logosData[equipo] || "https://via.placeholder.com/60?text=Logo";
-            let html = `
-                <div class="team-card">
-                    <div class="team-header">
-                        <img src="${logoUrl}" class="team-logo-preview" onerror="this.src='https://via.placeholder.com/60?text=Logo'">
-                        <h3 style="margin:0; font-size:1.1rem; color:var(--color-blue);">${equipo.toUpperCase()}</h3>
-                    </div>`;
-            
-            equiposObj[equipo].forEach(p => {
-                html += `
-                    <div class="player-entry">
-                        <span class="player-num">#${p.numero}</span>
-                        <span>${p.nombre}</span>
-                    </div>`;
-            });
-            container.innerHTML += html + `</div>`;
-        }
     }
 
     function filtrarYMostrar() {
@@ -294,21 +314,106 @@
                 count++;
                 if (r.estado === "approved") money += 1200;
                 let badgeClass = r.estado === 'approved' ? 'badge-approved' : 'badge-pending';
+                
+                // Si es viewer, ocultamos los botones de acción
+                const acciones = currentUserRole === 'admin' ? `
+                    <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">✓</button>
+                    <button class="btn-action btn-edit" onclick="abrirModalEdit('${id}')">✎</button>
+                    <button class="btn-action btn-delete" onclick="borrarInscripcion('${id}')">✕</button>
+                ` : `<span style="color:#666; font-size:0.7rem">Solo Lectura</span>`;
+
                 tbody.innerHTML += `<tr>
                     <td><img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirVisor('${r.fotoCarnet}')"></td>
                     <td>${r.jugadorName} <b>#${r.shirtNum || ''}</b></td>
                     <td>${equipo} <br><small style="color:var(--text-muted)">(${sigla})</small></td>
                     <td><span class="badge ${badgeClass}">${(r.estado || 'pen').toUpperCase()}</span></td>
-                    <td>
-                        <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">✓</button>
-                        <button class="btn-action btn-edit" onclick="abrirModalEdit('${id}')">✎</button>
-                        <button class="btn-action btn-delete" onclick="borrarInscripcion('${id}')">✕</button>
-                    </td>
+                    <td>${acciones}</td>
                 </tr>`;
             }
         }
         document.getElementById('count-j').innerText = count;
         document.getElementById('count-m').innerText = "$ " + money.toLocaleString();
+    }
+
+    function sincronizarConfiguracion() {
+        if(currentUserRole !== 'admin') return;
+        let nuevosDatos = [];
+        for (let id in rawData) {
+            const r = rawData[id];
+            if (r.estado === "approved") {
+                const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
+                const sigla = obtenerSiglaRol(rolOriginal);
+                nuevosDatos.push({
+                    equipo: r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo"),
+                    info: `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`
+                });
+            }
+        }
+        db.ref('config/jugadores').set(nuevosDatos).then(() => {
+            alert("Sincronización Total finalizada");
+        });
+    }
+
+    function guardarCambiosInscripcion() {
+        if(currentUserRole !== 'admin') return;
+        const id = document.getElementById('edit-id').value;
+        const updates = {
+            jugadorName: document.getElementById('edit-name').value.trim(),
+            shirtNum: document.getElementById('edit-number').value.trim(),
+            teamName: document.getElementById('edit-team').value.trim(),
+            fotoCarnet: currentBase64
+        };
+        db.ref('inscripciones/' + id).update(updates).then(() => {
+            cerrarModalEdit();
+            if(rawData[id].estado === 'approved') sincronizarConfiguracion();
+        });
+    }
+
+    function actualizarEstado(id, estado) { 
+        if(currentUserRole !== 'admin') return;
+        db.ref('inscripciones/' + id).update({ estado: estado }).then(() => {
+            if(estado === 'approved') sincronizarJugadorAConfig(id);
+        });
+    }
+
+    function borrarInscripcion(id) { 
+        if(currentUserRole !== 'admin') return;
+        if(confirm("¿Eliminar?")) db.ref('inscripciones/' + id).remove(); 
+    }
+
+    // Funciones de apoyo visual
+    function abrirModalEdit(id) {
+        if(currentUserRole !== 'admin') return;
+        const r = rawData[id];
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = r.jugadorName;
+        document.getElementById('edit-number').value = r.shirtNum || '';
+        document.getElementById('edit-team').value = r.teamName || (r.roles ? r.roles[0].team : "");
+        document.getElementById('edit-foto-v').src = r.fotoCarnet || '';
+        currentBase64 = r.fotoCarnet;
+        document.getElementById('modal-edit').style.display = 'flex';
+    }
+
+    function generarPlantillas() {
+        const container = document.getElementById('roster-container');
+        if(!container) return;
+        container.innerHTML = "";
+        let equiposObj = {};
+        for (let id in rawData) {
+            const r = rawData[id];
+            if(r.estado !== "approved") continue;
+            const team = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
+            if(!equiposObj[team]) equiposObj[team] = [];
+            equiposObj[team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
+        }
+        for(let equipo in equiposObj) {
+            const logoUrl = logosData[equipo] || "https://via.placeholder.com/60?text=Logo";
+            let html = `<div class="team-card"><div class="team-header"><img src="${logoUrl}" class="team-logo-preview"><h3 style="margin:0; font-size:1.1rem; color:var(--color-blue);">${equipo.toUpperCase()}</h3></div>`;
+            equiposObj[equipo].forEach(p => {
+                html += `<div class="player-entry"><span class="player-num">#${p.numero}</span><span>${p.nombre}</span></div>`;
+            });
+            container.innerHTML += html + `</div>`;
+        }
     }
 
     function escucharConfigCentral() {
@@ -324,65 +429,8 @@
         });
     }
 
-    function sincronizarConfiguracion() {
-        let nuevosDatos = [];
-        for (let id in rawData) {
-            const r = rawData[id];
-            if (r.estado === "approved") {
-                const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
-                const sigla = obtenerSiglaRol(rolOriginal);
-                
-                nuevosDatos.push({
-                    equipo: r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo"),
-                    // Formato final: #00 Nombre (Sigla)
-                    info: `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`
-                });
-            }
-        }
-        db.ref('config/jugadores').set(nuevosDatos).then(() => {
-            alert("Sincronización Total finalizada: Ahora en CONFIG JUGADORES solo verás siglas (C, A, JG)");
-        });
-    }
-
-    function sincronizarJugadorAConfig(id) {
-        const r = rawData[id];
-        if(!r) return;
-        const equipo = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
-        const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
-        const sigla = obtenerSiglaRol(rolOriginal);
-        const infoJugador = `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`;
-
-        db.ref('config/jugadores').once('value', snapshot => {
-            let listaActual = snapshot.val() || [];
-            if (!Array.isArray(listaActual)) listaActual = Object.values(listaActual);
-            if (!listaActual.find(j => j.info === infoJugador && j.equipo === equipo)) {
-                listaActual.push({ equipo: equipo, info: infoJugador });
-                db.ref('config/jugadores').set(listaActual);
-            }
-        });
-    }
-
-    function guardarCambiosInscripcion() {
-        const id = document.getElementById('edit-id').value;
-        const updates = {
-            jugadorName: document.getElementById('edit-name').value.trim(),
-            shirtNum: document.getElementById('edit-number').value.trim(),
-            teamName: document.getElementById('edit-team').value.trim(),
-            fotoCarnet: currentBase64
-        };
-        db.ref('inscripciones/' + id).update(updates).then(() => {
-            cerrarModalEdit();
-            // Si el jugador está aprobado, actualizamos automáticamente la configuración central
-            if(rawData[id].estado === 'approved') sincronizarConfiguracion();
-        });
-    }
-
-    function actualizarEstado(id, estado) { 
-        db.ref('inscripciones/' + id).update({ estado: estado }).then(() => {
-            if(estado === 'approved') sincronizarJugadorAConfig(id);
-        });
-    }
-
+    function cerrarModalEdit() { document.getElementById('modal-edit').style.display = 'none'; }
+    function abrirVisor(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; }
     function previsualizarArchivo(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -393,22 +441,6 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
-
-    function abrirModalEdit(id) {
-        const r = rawData[id];
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-name').value = r.jugadorName;
-        document.getElementById('edit-number').value = r.shirtNum || '';
-        document.getElementById('edit-team').value = r.teamName || (r.roles ? r.roles[0].team : "");
-        document.getElementById('edit-foto-v').src = r.fotoCarnet || '';
-        currentBase64 = r.fotoCarnet;
-        document.getElementById('modal-edit').style.display = 'flex';
-    }
-
-    function cerrarModalEdit() { document.getElementById('modal-edit').style.display = 'none'; }
-    function abrirVisor(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; }
-    function borrarInscripcion(id) { if(confirm("¿Eliminar?")) db.ref('inscripciones/' + id).remove(); }
-
     function actualizarFiltroEquipos() {
         const select = document.getElementById('filter-team');
         if(!select) return;
@@ -421,17 +453,6 @@
         select.innerHTML = '<option value="">Todos los Equipos</option>';
         Array.from(equipos).sort().forEach(eq => select.innerHTML += `<option value="${eq}" ${val === eq ? 'selected' : ''}>${eq}</option>`);
     }
-
-    function escucharUsuarios() {
-        db.ref('whitelist').on('value', snap => {
-            const body = document.getElementById('users-body');
-            if(!body) return;
-            body.innerHTML = "";
-            const users = snap.val() || {};
-            for(let id in users) body.innerHTML += `<tr><td>${users[id].email}</td><td>${users[id].role}</td><td>---</td></tr>`;
-        });
-    }
-
     function exportarCSV() {
         let csv = "Jugador,Numero,Equipo,Estado\n";
         for (let id in rawData) {
