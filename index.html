@@ -25,15 +25,15 @@
             color: var(--text-main); min-height: 100vh;
         }
 
-        /* LOGIN ELEGANTE */
+        /* PANTALLA DE INICIO ELEGANTE */
         #login-screen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh;
         }
 
         .login-box {
-            background: rgba(17, 22, 34, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(17, 22, 34, 0.85);
+            backdrop-filter: blur(15px);
             padding: 40px; border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -57,18 +57,14 @@
             border-radius: 8px; color: white; outline: none; box-sizing: border-box;
         }
 
-        input:focus { border-color: var(--color-blue); }
-
         .btn-login {
             width: 100%; padding: 12px; background: var(--accent-blue);
             color: white; border: none; border-radius: 8px;
             font-weight: 600; cursor: pointer; transition: 0.3s;
         }
 
-        .btn-login:hover { background: #1557b0; transform: translateY(-2px); }
-
-        /* PANEL PRINCIPAL */
-        #main-container { display: none; max-width: 1200px; margin: auto; padding: 20px; }
+        /* PANEL PRINCIPAL - Mantiene tu estructura original */
+        #main-container { display: none; max-width: 1250px; margin: auto; padding: 20px; }
         
         .user-bar { 
             background: var(--bg-card); padding: 15px; border-radius: 12px; 
@@ -89,22 +85,22 @@
         td { padding: 14px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
         .foto-mini { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; }
-        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; }
-        .badge-approved { background: rgba(39, 174, 96, 0.15); color: #2ecc71; }
-
         .btn-action { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-ok { background: var(--success); color: white; }
         .btn-logout { background: transparent; border: 1px solid #333; color: #888; }
 
         .section-panel { display: none; }
         .section-panel.active { display: block; }
+        
+        .filters { display: flex; gap: 10px; margin-bottom: 15px; }
+        select, .btn-csv { padding: 8px; border-radius: 5px; background: #161b28; color: white; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="logo-elegante">UERH</div>
-    <div class="sub-logo">Administración Central</div>
+    <div class="sub-logo">Administración</div>
     <div class="login-box">
         <input type="text" id="user-input" placeholder="Usuario">
         <input type="password" id="pass-input" placeholder="Contraseña">
@@ -126,6 +122,12 @@
     </div>
 
     <div id="tab-inscripciones" class="section-panel active">
+        <div class="filters">
+            <select id="filter-team" onchange="renderizarInscripciones()">
+                <option value="">Todos los Equipos</option>
+            </select>
+            <button class="btn-csv" onclick="exportarCSV()">Exportar CSV</button>
+        </div>
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>Foto</th><th>Jugador</th><th>Equipo</th><th>Estado</th><th>Acción</th></tr></thead>
@@ -155,14 +157,15 @@
     <div id="tab-usuarios" class="section-panel">
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Email Whitelist</th><th>Rol</th><th>Acción</th></tr></thead>
-                <tbody id="users-table"></tbody>
+                <thead><tr><th>Email</th><th>Rol</th><th>Acción</th></tr></thead>
+                <tbody id="users-body"></tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE (Original)
     const firebaseConfig = {
         apiKey: "AIzaSyCREXn3CyGfcSJlOLYn79vvUbgsTs4tc6c",
         databaseURL: "https://uerh-t2026-default-rtdb.firebaseio.com",
@@ -174,20 +177,17 @@
 
     let currentUser = null;
     let rawData = {};
-
-    const mapaRoles = { "Jugador": "JG", "Capitán": "C", "Asistente": "A", "Golero 1": "G1", "Golero 2": "G2", "Golero 3": "G3" };
-    function obtenerSigla(r) { return mapaRoles[r] || "JG"; }
+    const rolesMap = { "Jugador": "JG", "Capitán": "C", "Asistente": "A", "Golero 1": "G1", "Golero 2": "G2", "Golero 3": "G3" };
 
     function validarIngreso() {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-
         if (u === 'admin' && p === 'rojjos2026') {
             iniciarApp('Administrador', 'admin');
         } else if (u === 'visor' && p === 'ava2026') {
             iniciarApp('Visor', 'viewer');
         } else {
-            alert("Credenciales incorrectas");
+            alert("Acceso Incorrecto");
         }
     }
 
@@ -196,19 +196,21 @@
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-container').style.display = 'block';
         document.getElementById('display-name').innerText = nombre;
-        
-        escucharDatos();
+        escucharFirebase();
     }
 
     function cerrarSesion() { location.reload(); }
 
-    function escucharDatos() {
+    function escucharFirebase() {
+        // Escuchar Inscripciones
         db.ref('inscripciones').on('value', snap => {
             rawData = snap.val() || {};
+            actualizarFiltros();
             renderizarInscripciones();
             renderizarPlantilla();
         });
 
+        // Escuchar Config
         db.ref('config/jugadores').on('value', snap => {
             const tbody = document.getElementById('data-table-body');
             tbody.innerHTML = "";
@@ -217,28 +219,35 @@
             });
         });
 
+        // Escuchar Usuarios
         db.ref('whitelist').on('value', snap => {
-            const tbody = document.getElementById('users-table');
-            tbody.innerHTML = "";
-            Object.values(snap.val() || {}).forEach(u => {
-                tbody.innerHTML += `<tr><td>${u.email}</td><td>${(u.role || 'viewer').toUpperCase()}</td><td>---</td></tr>`;
-            });
+            const body = document.getElementById('users-body');
+            body.innerHTML = "";
+            const users = snap.val() || {};
+            for(let id in users) {
+                body.innerHTML += `<tr><td>${users[id].email}</td><td>${users[id].role}</td><td>---</td></tr>`;
+            }
         });
     }
 
     function renderizarInscripciones() {
         const tbody = document.getElementById('main-table');
+        const filter = document.getElementById('filter-team').value;
         tbody.innerHTML = "";
+        
         for (let id in rawData) {
             const r = rawData[id];
-            const btn = currentUser.rol === 'admin' && r.estado !== 'approved'
-                ? `<button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button>`
-                : `<small style="color:gray">${r.estado === 'approved' ? 'LISTO' : 'LECTURA'}</small>`;
+            const equipo = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
+            if (filter && equipo !== filter) continue;
+
+            const btn = (currentUser.rol === 'admin' && r.estado !== 'approved') 
+                ? `<button onclick="aprobar('${id}')" class="btn-action btn-ok">✓</button>` 
+                : `<small>${(r.estado || 'pen').toUpperCase()}</small>`;
 
             tbody.innerHTML += `<tr>
                 <td><img src="${r.fotoCarnet}" class="foto-mini"></td>
-                <td>${r.jugadorName}</td><td>${r.teamName || '---'}</td>
-                <td><span class="badge ${r.estado === 'approved' ? 'badge-approved' : ''}">${(r.estado || 'pen').toUpperCase()}</span></td>
+                <td>${r.jugadorName}</td><td>${equipo}</td>
+                <td>${r.estado === 'approved' ? 'APROBADO' : 'PENDIENTE'}</td>
                 <td>${btn}</td>
             </tr>`;
         }
@@ -250,10 +259,11 @@
         for (let id in rawData) {
             const r = rawData[id];
             if (r.estado === 'approved') {
+                const rol = r.role || (r.roles ? r.roles[0].role : "Jugador");
                 tbody.innerHTML += `<tr>
                     <td><img src="${r.fotoCarnet}" class="foto-mini"></td>
                     <td>${r.jugadorName}</td><td>${r.teamName}</td>
-                    <td>#${r.shirtNum || ''}</td><td>${obtenerSigla(r.role)}</td>
+                    <td>#${r.shirtNum || ''}</td><td>${rolesMap[rol] || 'JG'}</td>
                 </tr>`;
             }
         }
@@ -262,13 +272,40 @@
     function aprobar(id) {
         if (currentUser.rol !== 'admin') return;
         const r = rawData[id];
-        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (${obtenerSigla(r.role)})`;
+        const rol = r.role || (r.roles ? r.roles[0].role : "Jugador");
+        const sigla = rolesMap[rol] || "JG";
+        const infoFinal = `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`;
+        
         db.ref('inscripciones/' + id).update({ estado: 'approved' });
         db.ref('config/jugadores').once('value', snap => {
             let actual = Object.values(snap.val() || {});
             actual.push({ equipo: r.teamName || 'Sin Equipo', info: infoFinal });
             db.ref('config/jugadores').set(actual);
         });
+    }
+
+    function actualizarFiltros() {
+        const select = document.getElementById('filter-team');
+        const equipos = new Set();
+        for (let id in rawData) equipos.add(rawData[id].teamName || "Sin Equipo");
+        const actual = select.value;
+        select.innerHTML = '<option value="">Todos los Equipos</option>';
+        Array.from(equipos).sort().forEach(eq => {
+            select.innerHTML += `<option value="${eq}" ${actual === eq ? 'selected' : ''}>${eq}</option>`;
+        });
+    }
+
+    function exportarCSV() {
+        let csv = "Jugador,Numero,Equipo,Estado\n";
+        for (let id in rawData) {
+            const r = rawData[id];
+            csv += `"${r.jugadorName}","${r.shirtNum}","${r.teamName || ''}","${r.estado}"\n`;
+        }
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", "inscripciones_uerh.csv");
+        link.click();
     }
 
     function switchTab(id, el) {
