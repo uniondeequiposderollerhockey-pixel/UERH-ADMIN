@@ -63,7 +63,7 @@
         .modal-overlay { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); justify-content: center; align-items: center; }
         #modal-img { max-width: 90%; max-height: 80vh; border-radius: 10px; }
         
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; border: 1px solid var(--color-blue); width: 380px; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 15px; border: 1px solid var(--color-blue); width: 420px; max-height: 90vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; color: var(--color-blue); text-align: center; }
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
@@ -80,6 +80,11 @@
         .btn-delete { background: var(--danger); }
         .btn-ok { background: var(--success); }
         .btn-sync { background: var(--color-blue); color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        
+        /* Estilos para las filas de roles múltiples */
+        .rol-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
+        .rol-input { flex: 2; padding: 8px; background: #1c2333; border: 1px solid #333; color: white; border-radius: 4px; font-size: 0.8rem; }
+        .rol-select { flex: 1.5; padding: 8px; background: #1c2333; border: 1px solid #333; color: white; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -112,7 +117,7 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Fotos</th><th>Jugador / #</th><th>Equipo / Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Fotos</th><th>Jugador / #</th><th>Equipos</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody id="main-table"></tbody>
             </table>
         </div>
@@ -166,10 +171,16 @@
             <label>Número de Camiseta</label>
             <input type="text" id="edit-number">
         </div>
+        
         <div class="form-group">
-            <label>Equipo</label>
-            <input type="text" id="edit-team">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+                Equipos y Roles 
+                <button onclick="agregarFilaRol()" style="background:var(--success); border:none; color:white; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">+ Añadir Otro</button>
+            </label>
+            <div id="roles-container" style="margin-top: 10px;">
+                </div>
         </div>
+
         <div class="modal-actions">
             <button class="btn-action" style="background:#444" onclick="cerrarModalEdit()">Cancelar</button>
             <button class="btn-action btn-ok" onclick="guardarCambiosInscripcion()">Guardar Cambios</button>
@@ -192,6 +203,7 @@
     let rawData = {};
     let logosData = {};
     let currentBase64 = null;
+    let rolesEnEdicion = [];
 
     const mapaRoles = {
         "Jugador": "JG",
@@ -202,17 +214,10 @@
         "Golero 3": "G3"
     };
 
-    /**
-     * Obtiene exclusivamente la sigla del rol (C, A, JG, etc.).
-     * Limpia cualquier formato previo para asegurar que solo quede la sigla.
-     */
     function obtenerSiglaRol(rolLargo) {
         if (!rolLargo) return "JG";
-        // Eliminar paréntesis y limpiar espacios
         let rolLimpio = rolLargo.replace(/[()]/g, '').trim();
-        // Si el rol es el nombre largo (ej: "Capitán"), devolvemos la sigla del mapa ("C")
         if (mapaRoles[rolLimpio]) return mapaRoles[rolLimpio];
-        // Si no está en el mapa, devolvemos el valor limpio (por si ya era una sigla)
         return rolLimpio;
     }
 
@@ -251,9 +256,14 @@
         for (let id in rawData) {
             const r = rawData[id];
             if(r.estado !== "approved") continue;
-            const team = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
-            if(!equiposObj[team]) equiposObj[team] = [];
-            equiposObj[team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
+            
+            // Si tiene múltiples roles, lo ponemos en todos los equipos
+            const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
+            listaRoles.forEach(rol => {
+                if(!rol.team) return;
+                if(!equiposObj[rol.team]) equiposObj[rol.team] = [];
+                equiposObj[rol.team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
+            });
         }
 
         for(let equipo in equiposObj) {
@@ -286,18 +296,23 @@
 
         for (let id in rawData) {
             const r = rawData[id];
-            const equipo = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
-            const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
-            const sigla = obtenerSiglaRol(rolOriginal);
+            const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
+            
+            // Verificar si el jugador cumple el filtro de equipo (al menos en uno de sus roles)
+            const perteneceAlEquipoSeleccionado = selectedTeam === "" || listaRoles.some(rol => rol.team === selectedTeam);
 
-            if (r.jugadorName.toLowerCase().includes(searchName) && (selectedTeam === "" || equipo === selectedTeam)) {
+            if (r.jugadorName.toLowerCase().includes(searchName) && perteneceAlEquipoSeleccionado) {
                 count++;
                 if (r.estado === "approved") money += 1200;
                 let badgeClass = r.estado === 'approved' ? 'badge-approved' : 'badge-pending';
+                
+                // Generar lista visual de equipos y siglas
+                let htmlEquipos = listaRoles.map(rol => `${rol.team} <small>(${obtenerSiglaRol(rol.role)})</small>`).join("<br>");
+
                 tbody.innerHTML += `<tr>
                     <td><img src="${r.fotoCarnet}" class="foto-mini" onclick="abrirVisor('${r.fotoCarnet}')"></td>
                     <td>${r.jugadorName} <b>#${r.shirtNum || ''}</b></td>
-                    <td>${equipo} <br><small style="color:var(--text-muted)">(${sigla})</small></td>
+                    <td>${htmlEquipos}</td>
                     <td><span class="badge ${badgeClass}">${(r.estado || 'pen').toUpperCase()}</span></td>
                     <td>
                         <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">✓</button>
@@ -329,36 +344,20 @@
         for (let id in rawData) {
             const r = rawData[id];
             if (r.estado === "approved") {
-                const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
-                const sigla = obtenerSiglaRol(rolOriginal);
+                const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
                 
-                nuevosDatos.push({
-                    equipo: r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo"),
-                    // Formato final: #00 Nombre (Sigla)
-                    info: `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`
+                listaRoles.forEach(rol => {
+                    if(!rol.team) return;
+                    const sigla = obtenerSiglaRol(rol.role);
+                    nuevosDatos.push({
+                        equipo: rol.team,
+                        info: `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`
+                    });
                 });
             }
         }
         db.ref('config/jugadores').set(nuevosDatos).then(() => {
-            alert("Sincronización Total finalizada: Ahora en CONFIG JUGADORES solo verás siglas (C, A, JG)");
-        });
-    }
-
-    function sincronizarJugadorAConfig(id) {
-        const r = rawData[id];
-        if(!r) return;
-        const equipo = r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo");
-        const rolOriginal = r.roles ? r.roles[0].role : "Jugador";
-        const sigla = obtenerSiglaRol(rolOriginal);
-        const infoJugador = `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`;
-
-        db.ref('config/jugadores').once('value', snapshot => {
-            let listaActual = snapshot.val() || [];
-            if (!Array.isArray(listaActual)) listaActual = Object.values(listaActual);
-            if (!listaActual.find(j => j.info === infoJugador && j.equipo === equipo)) {
-                listaActual.push({ equipo: equipo, info: infoJugador });
-                db.ref('config/jugadores').set(listaActual);
-            }
+            alert("Sincronización Total finalizada. Jugadores inscritos en múltiples equipos actualizados.");
         });
     }
 
@@ -367,19 +366,20 @@
         const updates = {
             jugadorName: document.getElementById('edit-name').value.trim(),
             shirtNum: document.getElementById('edit-number').value.trim(),
-            teamName: document.getElementById('edit-team').value.trim(),
+            // Guardamos el primer equipo como teamName para retrocompatibilidad
+            teamName: rolesEnEdicion[0] ? rolesEnEdicion[0].team : "",
+            roles: rolesEnEdicion,
             fotoCarnet: currentBase64
         };
         db.ref('inscripciones/' + id).update(updates).then(() => {
             cerrarModalEdit();
-            // Si el jugador está aprobado, actualizamos automáticamente la configuración central
-            if(rawData[id].estado === 'approved') sincronizarConfiguracion();
+            if(rawData[id].status === 'approved' || rawData[id].estado === 'approved') sincronizarConfiguracion();
         });
     }
 
     function actualizarEstado(id, estado) { 
         db.ref('inscripciones/' + id).update({ estado: estado }).then(() => {
-            if(estado === 'approved') sincronizarJugadorAConfig(id);
+            if(estado === 'approved') sincronizarConfiguracion();
         });
     }
 
@@ -399,10 +399,48 @@
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = r.jugadorName;
         document.getElementById('edit-number').value = r.shirtNum || '';
-        document.getElementById('edit-team').value = r.teamName || (r.roles ? r.roles[0].team : "");
         document.getElementById('edit-foto-v').src = r.fotoCarnet || '';
         currentBase64 = r.fotoCarnet;
+        
+        // Cargar roles
+        rolesEnEdicion = r.roles ? JSON.parse(JSON.stringify(r.roles)) : [{ team: r.teamName || "", role: "Jugador" }];
+        renderizarFilasRoles();
+
         document.getElementById('modal-edit').style.display = 'flex';
+    }
+
+    function renderizarFilasRoles() {
+        const container = document.getElementById('roles-container');
+        container.innerHTML = "";
+        rolesEnEdicion.forEach((rol, index) => {
+            container.innerHTML += `
+                <div class="rol-row">
+                    <input type="text" class="rol-input" placeholder="Nombre Equipo" value="${rol.team}" onchange="actualizarDatoRol(${index}, 'team', this.value)">
+                    <select class="rol-select" onchange="actualizarDatoRol(${index}, 'role', this.value)">
+                        <option value="Jugador" ${rol.role === 'Jugador' ? 'selected' : ''}>JG</option>
+                        <option value="Capitán" ${rol.role === 'Capitán' ? 'selected' : ''}>C</option>
+                        <option value="Asistente" ${rol.role === 'Asistente' ? 'selected' : ''}>A</option>
+                        <option value="Golero 1" ${rol.role === 'Golero 1' ? 'selected' : ''}>G1</option>
+                        <option value="Golero 2" ${rol.role === 'Golero 2' ? 'selected' : ''}>G2</option>
+                        <option value="Golero 3" ${rol.role === 'Golero 3' ? 'selected' : ''}>G3</option>
+                    </select>
+                    ${index > 0 ? `<button onclick="eliminarFilaRol(${index})" style="background:var(--danger); border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer;">✕</button>` : ''}
+                </div>`;
+        });
+    }
+
+    function agregarFilaRol() {
+        rolesEnEdicion.push({ team: "", role: "Jugador" });
+        renderizarFilasRoles();
+    }
+
+    function eliminarFilaRol(index) {
+        rolesEnEdicion.splice(index, 1);
+        renderizarFilasRoles();
+    }
+
+    function actualizarDatoRol(index, campo, valor) {
+        rolesEnEdicion[index][campo] = valor;
     }
 
     function cerrarModalEdit() { document.getElementById('modal-edit').style.display = 'none'; }
@@ -415,11 +453,14 @@
         const equipos = new Set();
         for (let id in rawData) {
             const r = rawData[id];
-            equipos.add(r.teamName || (r.roles ? r.roles[0].team : "Sin Equipo"));
+            const lista = r.roles || [{ team: r.teamName || "Sin Equipo" }];
+            lista.forEach(rol => equipos.add(rol.team));
         }
         const val = select.value;
         select.innerHTML = '<option value="">Todos los Equipos</option>';
-        Array.from(equipos).sort().forEach(eq => select.innerHTML += `<option value="${eq}" ${val === eq ? 'selected' : ''}>${eq}</option>`);
+        Array.from(equipos).sort().forEach(eq => {
+            if(eq) select.innerHTML += `<option value="${eq}" ${val === eq ? 'selected' : ''}>${eq}</option>`;
+        });
     }
 
     function escucharUsuarios() {
@@ -433,10 +474,11 @@
     }
 
     function exportarCSV() {
-        let csv = "Jugador,Numero,Equipo,Estado\n";
+        let csv = "Jugador,Numero,Equipos,Estado\n";
         for (let id in rawData) {
             const r = rawData[id];
-            csv += `"${r.jugadorName}","${r.shirtNum}","${r.teamName || ''}","${r.estado}"\n`;
+            const rolesText = (r.roles || []).map(rol => `${rol.team}(${rol.role})`).join(" | ") || r.teamName;
+            csv += `"${r.jugadorName}","${r.shirtNum}","${rolesText}","${r.estado}"\n`;
         }
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
