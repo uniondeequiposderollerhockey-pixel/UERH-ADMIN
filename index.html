@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UERH Admin - Panel Oficial (Acceso Libre)</title>
+    <title>UERH Admin - Panel Oficial (Acceso Protegido)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
@@ -23,7 +23,7 @@
             background-image: radial-gradient(circle at 50% -20%, rgba(66,133,244,0.15) 0%, rgba(10,14,23,0) 50%);
         }
 
-        .container { max-width: 1100px; margin: auto; padding: 20px; display: block; }
+        .container { max-width: 1100px; margin: auto; padding: 20px; display: none; }
         .user-bar { background: var(--bg-card); padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
         
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -81,25 +81,50 @@
         .btn-ok { background: var(--success); }
         .btn-sync { background: var(--color-blue); color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
         
-        /* Estilos para las filas de roles múltiples */
         .rol-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
         .rol-input { flex: 2; padding: 8px; background: #1c2333; border: 1px solid #333; color: white; border-radius: 4px; font-size: 0.8rem; }
         .rol-select { flex: 1.5; padding: 8px; background: #1c2333; border: 1px solid #333; color: white; border-radius: 4px; font-size: 0.8rem; }
+
+        /* Login Screen */
+        #login-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; background-image: radial-gradient(circle at 50% -20%, rgba(66,133,244,0.15) 0%, rgba(10,14,23,0) 50%); }
+        .login-box { background: var(--bg-card); padding: 40px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; }
     </style>
 </head>
 <body>
 
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color: var(--color-blue); margin-bottom: 10px;">UERH ADMIN</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 30px;">Panel de Gestión Oficial</p>
+        
+        <div class="form-group" style="text-align: left;">
+            <label>USUARIO</label>
+            <input type="text" id="login-user" placeholder="Ej: Admin" onkeypress="if(event.key==='Enter') intentarLogin()">
+        </div>
+        
+        <div class="form-group" style="text-align: left; margin-top: 15px;">
+            <label>CONTRASEÑA</label>
+            <input type="password" id="login-pass" placeholder="••••••••" onkeypress="if(event.key==='Enter') intentarLogin()">
+        </div>
+
+        <button onclick="intentarLogin()" style="width: 100%; margin-top: 25px; padding: 14px; background: var(--color-blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">INICIAR SESIÓN</button>
+        <div id="login-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 15px; display: none;">Credenciales incorrectas</div>
+    </div>
+</div>
+
 <div id="main-container" class="container">
     <div class="user-bar">
-        <div><span style="font-weight:bold; color:var(--color-blue);">UERH ADMIN PANEL</span></div>
-        <button onclick="location.reload()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Recargar Datos</button>
+        <div><span style="font-weight:bold; color:var(--color-blue);">UERH ADMIN PANEL</span> <span id="view-mode" style="font-size: 0.7rem; margin-left: 10px; color: #888;"></span></div>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="location.reload()" style="background:none; border:1px solid #333; color:#888; cursor:pointer; padding:5px 12px; border-radius:6px;">Recargar</button>
+            <button onclick="cerrarSesion()" style="background:var(--danger); border:none; color:white; cursor:pointer; padding:5px 12px; border-radius:6px; font-weight:bold;">Salir</button>
+        </div>
     </div>
 
     <div class="nav-tabs">
         <div class="nav-link active" onclick="switchTab('tab-inscripciones', this)">Inscripciones</div>
         <div class="nav-link" onclick="switchTab('tab-plantillas', this)">Plantillas</div>
         <div class="nav-link" onclick="switchTab('tab-data', this)">Data (Config)</div>
-        <div class="nav-link" onclick="switchTab('tab-usuarios', this)">Usuarios</div>
     </div>
 
     <div id="tab-inscripciones" class="section-panel active">
@@ -117,7 +142,7 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Fotos</th><th>Jugador / #</th><th>Equipos</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Fotos</th><th>Jugador / #</th><th>Equipos</th><th>Estado</th><th class="col-accion">Acciones</th></tr></thead>
                 <tbody id="main-table"></tbody>
             </table>
         </div>
@@ -135,18 +160,8 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th style="width: 30%;">Equipo</th><th>Info Completa (Número, Nombre, Rol)</th></tr></thead>
+                <thead><tr><th style="width: 30%;">Equipo</th><th>Info Completa</th></tr></thead>
                 <tbody id="data-table-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="tab-usuarios" class="section-panel">
-        <div class="header"><h2>GESTIÓN DE ACCESO</h2></div>
-        <div class="table-wrapper">
-            <table>
-                <thead><tr><th>Email</th><th>Rango</th><th>Acción</th></tr></thead>
-                <tbody id="users-body"></tbody>
             </table>
         </div>
     </div>
@@ -159,28 +174,13 @@
         <h3>Editar Inscripción</h3>
         <img id="edit-foto-v" class="edit-foto-preview" src="">
         <input type="hidden" id="edit-id">
+        <div class="form-group"><label>Cambiar Foto</label><input type="file" id="edit-foto-file" accept="image/*" onchange="previsualizarArchivo(this)"></div>
+        <div class="form-group"><label>Nombre</label><input type="text" id="edit-name"></div>
+        <div class="form-group"><label>Número</label><input type="text" id="edit-number"></div>
         <div class="form-group">
-            <label>Cambiar Foto (Dispositivo)</label>
-            <input type="file" id="edit-foto-file" accept="image/*" onchange="previsualizarArchivo(this)">
+            <label style="display: flex; justify-content: space-between;">Equipos/Roles <button onclick="agregarFilaRol()" style="background:var(--success); border:none; color:white; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">+ Añadir</button></label>
+            <div id="roles-container" style="margin-top: 10px;"></div>
         </div>
-        <div class="form-group">
-            <label>Nombre del Jugador</label>
-            <input type="text" id="edit-name">
-        </div>
-        <div class="form-group">
-            <label>Número de Camiseta</label>
-            <input type="text" id="edit-number">
-        </div>
-        
-        <div class="form-group">
-            <label style="display: flex; justify-content: space-between; align-items: center;">
-                Equipos y Roles 
-                <button onclick="agregarFilaRol()" style="background:var(--success); border:none; color:white; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">+ Añadir Otro</button>
-            </label>
-            <div id="roles-container" style="margin-top: 10px;">
-                </div>
-        </div>
-
         <div class="modal-actions">
             <button class="btn-action" style="background:#444" onclick="cerrarModalEdit()">Cancelar</button>
             <button class="btn-action btn-ok" onclick="guardarCambiosInscripcion()">Guardar Cambios</button>
@@ -205,31 +205,69 @@
     let currentBase64 = null;
     let rolesEnEdicion = [];
 
-    const mapaRoles = {
-        "Jugador": "JG",
-        "Capitán": "C",
-        "Asistente": "A",
-        "Golero 1": "G1",
-        "Golero 2": "G2",
-        "Golero 3": "G3"
-    };
+    const USUARIOS = [
+        { u: "AVA", p: "ava2026", role: "viewer" },
+        { u: "FLOR", p: "flor83", role: "viewer" },
+        { u: "ADMIN", p: "rojjos2026", role: "admin" }
+    ];
+
+    const mapaRoles = { "Jugador": "JG", "Capitán": "C", "Asistente": "A", "Golero 1": "G1", "Golero 2": "G2", "Golero 3": "G3" };
 
     function obtenerSiglaRol(rolLargo) {
         if (!rolLargo) return "JG";
         let rolLimpio = rolLargo.replace(/[()]/g, '').trim();
-        if (mapaRoles[rolLimpio]) return mapaRoles[rolLimpio];
-        return rolLimpio;
+        return mapaRoles[rolLimpio] || rolLimpio;
     }
 
-    window.onload = () => {
-        escucharInscripciones();
+    // --- AUTENTICACIÓN ---
+    function intentarLogin() {
+        const uInput = document.getElementById('login-user').value.toLowerCase();
+        const pInput = document.getElementById('login-pass').value.toLowerCase();
+        const found = USUARIOS.find(x => x.u.toLowerCase() === uInput && x.p.toLowerCase() === pInput);
+
+        if(found) {
+            localStorage.setItem('uerh_session', found.u.toUpperCase());
+            localStorage.setItem('uerh_role', found.role);
+            checkSesion();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function checkSesion() {
+        const user = localStorage.getItem('uerh_session');
+        const role = localStorage.getItem('uerh_role');
+        if(user) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            document.getElementById('view-mode').innerText = role === 'admin' ? '[ADMINISTRADOR]' : '[MODO CONSULTA]';
+            if(role === 'viewer') aplicarModoLectura();
+            inicializarApp();
+        }
+    }
+
+    function cerrarSesion() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    function aplicarModoLectura() {
+        const style = document.createElement('style');
+        style.innerHTML = `.btn-edit, .btn-delete, .btn-ok, .btn-sync, .col-accion { display: none !important; }`;
+        document.head.appendChild(style);
+        window.guardarCambiosInscripcion = () => alert("Acceso denegado");
+        window.actualizarEstado = () => alert("Acceso denegado");
+        window.borrarInscripcion = () => alert("Acceso denegado");
+    }
+
+    // --- LÓGICA DE DATOS ---
+    window.onload = checkSesion;
+
+    function inicializarApp() {
+        db.ref('inscripciones').on('value', snap => { rawData = snap.val() || {}; actualizarFiltroEquipos(); filtrarYMostrar(); generarPlantillas(); });
+        db.ref('config/logos').on('value', snap => { logosData = snap.val() || {}; generarPlantillas(); });
         escucharConfigCentral();
-        db.ref('config/logos').on('value', snap => { 
-            logosData = snap.val() || {}; 
-            generarPlantillas(); 
-        });
-        escucharUsuarios();
-    };
+    }
 
     function switchTab(tabId, el) {
         document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('active'));
@@ -238,75 +276,22 @@
         el.classList.add('active');
     }
 
-    function escucharInscripciones() {
-        db.ref('inscripciones').on('value', snapshot => {
-            rawData = snapshot.val() || {};
-            actualizarFiltroEquipos();
-            filtrarYMostrar();
-            generarPlantillas();
-        });
-    }
-
-    function generarPlantillas() {
-        const container = document.getElementById('roster-container');
-        if(!container) return;
-        container.innerHTML = "";
-        let equiposObj = {};
-
-        for (let id in rawData) {
-            const r = rawData[id];
-            if(r.estado !== "approved") continue;
-            
-            // Si tiene múltiples roles, lo ponemos en todos los equipos
-            const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
-            listaRoles.forEach(rol => {
-                if(!rol.team) return;
-                if(!equiposObj[rol.team]) equiposObj[rol.team] = [];
-                equiposObj[rol.team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
-            });
-        }
-
-        for(let equipo in equiposObj) {
-            const logoUrl = logosData[equipo] || "https://via.placeholder.com/60?text=Logo";
-            let html = `
-                <div class="team-card">
-                    <div class="team-header">
-                        <img src="${logoUrl}" class="team-logo-preview" onerror="this.src='https://via.placeholder.com/60?text=Logo'">
-                        <h3 style="margin:0; font-size:1.1rem; color:var(--color-blue);">${equipo.toUpperCase()}</h3>
-                    </div>`;
-            
-            equiposObj[equipo].forEach(p => {
-                html += `
-                    <div class="player-entry">
-                        <span class="player-num">#${p.numero}</span>
-                        <span>${p.nombre}</span>
-                    </div>`;
-            });
-            container.innerHTML += html + `</div>`;
-        }
-    }
-
     function filtrarYMostrar() {
         const searchName = document.getElementById('search-player').value.toLowerCase();
         const selectedTeam = document.getElementById('filter-team').value;
         const tbody = document.getElementById('main-table');
-        if(!tbody) return;
         tbody.innerHTML = "";
         let count = 0, money = 0;
 
         for (let id in rawData) {
             const r = rawData[id];
             const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
-            
-            // Verificar si el jugador cumple el filtro de equipo (al menos en uno de sus roles)
-            const perteneceAlEquipoSeleccionado = selectedTeam === "" || listaRoles.some(rol => rol.team === selectedTeam);
+            const matchTeam = selectedTeam === "" || listaRoles.some(rol => rol.team === selectedTeam);
 
-            if (r.jugadorName.toLowerCase().includes(searchName) && perteneceAlEquipoSeleccionado) {
+            if (r.jugadorName.toLowerCase().includes(searchName) && matchTeam) {
                 count++;
                 if (r.estado === "approved") money += 1200;
                 let badgeClass = r.estado === 'approved' ? 'badge-approved' : 'badge-pending';
-                
-                // Generar lista visual de equipos y siglas
                 let htmlEquipos = listaRoles.map(rol => `${rol.team} <small>(${obtenerSiglaRol(rol.role)})</small>`).join("<br>");
 
                 tbody.innerHTML += `<tr>
@@ -314,7 +299,7 @@
                     <td>${r.jugadorName} <b>#${r.shirtNum || ''}</b></td>
                     <td>${htmlEquipos}</td>
                     <td><span class="badge ${badgeClass}">${(r.estado || 'pen').toUpperCase()}</span></td>
-                    <td>
+                    <td class="col-accion">
                         <button class="btn-action btn-ok" onclick="actualizarEstado('${id}', 'approved')">✓</button>
                         <button class="btn-action btn-edit" onclick="abrirModalEdit('${id}')">✎</button>
                         <button class="btn-action btn-delete" onclick="borrarInscripcion('${id}')">✕</button>
@@ -326,72 +311,33 @@
         document.getElementById('count-m').innerText = "$ " + money.toLocaleString();
     }
 
+    function generarPlantillas() {
+        const container = document.getElementById('roster-container');
+        container.innerHTML = "";
+        let equiposObj = {};
+        for (let id in rawData) {
+            const r = rawData[id];
+            if(r.estado !== "approved") continue;
+            (r.roles || [{ team: r.teamName || "Sin Equipo" }]).forEach(rol => {
+                if(!rol.team) return;
+                if(!equiposObj[rol.team]) equiposObj[rol.team] = [];
+                equiposObj[rol.team].push({ nombre: r.jugadorName, numero: r.shirtNum || "00" });
+            });
+        }
+        for(let eq in equiposObj) {
+            let html = `<div class="team-card"><div class="team-header"><img src="${logosData[eq] || ''}" class="team-logo-preview" onerror="this.src='https://via.placeholder.com/60'"><h3>${eq.toUpperCase()}</h3></div>`;
+            equiposObj[eq].forEach(p => html += `<div class="player-entry"><span class="player-num">#${p.numero}</span><span>${p.nombre}</span></div>`);
+            container.innerHTML += html + `</div>`;
+        }
+    }
+
     function escucharConfigCentral() {
         db.ref('config/jugadores').on('value', snap => {
             const tbody = document.getElementById('data-table-body');
-            if(!tbody) return;
             tbody.innerHTML = "";
-            const items = snap.val() || [];
-            const lista = Array.isArray(items) ? items : Object.values(items);
-            lista.sort((a,b) => (a.equipo > b.equipo) ? 1 : -1).forEach(j => {
-                tbody.innerHTML += `<tr><td style="color:var(--color-blue); font-weight:bold;">${j.equipo}</td><td>${j.info}</td></tr>`;
-            });
+            const items = Object.values(snap.val() || {}).sort((a,b) => a.equipo > b.equipo ? 1 : -1);
+            items.forEach(j => tbody.innerHTML += `<tr><td style="color:var(--color-blue); font-weight:bold;">${j.equipo}</td><td>${j.info}</td></tr>`);
         });
-    }
-
-    function sincronizarConfiguracion() {
-        let nuevosDatos = [];
-        for (let id in rawData) {
-            const r = rawData[id];
-            if (r.estado === "approved") {
-                const listaRoles = r.roles || [{ team: r.teamName || "Sin Equipo", role: "Jugador" }];
-                
-                listaRoles.forEach(rol => {
-                    if(!rol.team) return;
-                    const sigla = obtenerSiglaRol(rol.role);
-                    nuevosDatos.push({
-                        equipo: rol.team,
-                        info: `#${r.shirtNum || '00'} ${r.jugadorName} (${sigla})`
-                    });
-                });
-            }
-        }
-        db.ref('config/jugadores').set(nuevosDatos).then(() => {
-            alert("Sincronización Total finalizada. Jugadores inscritos en múltiples equipos actualizados.");
-        });
-    }
-
-    function guardarCambiosInscripcion() {
-        const id = document.getElementById('edit-id').value;
-        const updates = {
-            jugadorName: document.getElementById('edit-name').value.trim(),
-            shirtNum: document.getElementById('edit-number').value.trim(),
-            // Guardamos el primer equipo como teamName para retrocompatibilidad
-            teamName: rolesEnEdicion[0] ? rolesEnEdicion[0].team : "",
-            roles: rolesEnEdicion,
-            fotoCarnet: currentBase64
-        };
-        db.ref('inscripciones/' + id).update(updates).then(() => {
-            cerrarModalEdit();
-            if(rawData[id].status === 'approved' || rawData[id].estado === 'approved') sincronizarConfiguracion();
-        });
-    }
-
-    function actualizarEstado(id, estado) { 
-        db.ref('inscripciones/' + id).update({ estado: estado }).then(() => {
-            if(estado === 'approved') sincronizarConfiguracion();
-        });
-    }
-
-    function previsualizarArchivo(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => { 
-                document.getElementById('edit-foto-v').src = e.target.result;
-                currentBase64 = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
     }
 
     function abrirModalEdit(id) {
@@ -401,91 +347,71 @@
         document.getElementById('edit-number').value = r.shirtNum || '';
         document.getElementById('edit-foto-v').src = r.fotoCarnet || '';
         currentBase64 = r.fotoCarnet;
-        
-        // Cargar roles
         rolesEnEdicion = r.roles ? JSON.parse(JSON.stringify(r.roles)) : [{ team: r.teamName || "", role: "Jugador" }];
         renderizarFilasRoles();
-
         document.getElementById('modal-edit').style.display = 'flex';
     }
 
     function renderizarFilasRoles() {
         const container = document.getElementById('roles-container');
         container.innerHTML = "";
-        rolesEnEdicion.forEach((rol, index) => {
-            container.innerHTML += `
-                <div class="rol-row">
-                    <input type="text" class="rol-input" placeholder="Nombre Equipo" value="${rol.team}" onchange="actualizarDatoRol(${index}, 'team', this.value)">
-                    <select class="rol-select" onchange="actualizarDatoRol(${index}, 'role', this.value)">
-                        <option value="Jugador" ${rol.role === 'Jugador' ? 'selected' : ''}>JG</option>
-                        <option value="Capitán" ${rol.role === 'Capitán' ? 'selected' : ''}>C</option>
-                        <option value="Asistente" ${rol.role === 'Asistente' ? 'selected' : ''}>A</option>
-                        <option value="Golero 1" ${rol.role === 'Golero 1' ? 'selected' : ''}>G1</option>
-                        <option value="Golero 2" ${rol.role === 'Golero 2' ? 'selected' : ''}>G2</option>
-                        <option value="Golero 3" ${rol.role === 'Golero 3' ? 'selected' : ''}>G3</option>
-                    </select>
-                    ${index > 0 ? `<button onclick="eliminarFilaRol(${index})" style="background:var(--danger); border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer;">✕</button>` : ''}
-                </div>`;
+        rolesEnEdicion.forEach((rol, i) => {
+            container.innerHTML += `<div class="rol-row">
+                <input type="text" class="rol-input" value="${rol.team}" onchange="rolesEnEdicion[${i}].team=this.value">
+                <select class="rol-select" onchange="rolesEnEdicion[${i}].role=this.value">
+                    ${Object.keys(mapaRoles).map(m => `<option value="${m}" ${rol.role===m?'selected':''}>${mapaRoles[m]}</option>`).join('')}
+                </select>
+                ${i>0 ? `<button onclick="rolesEnEdicion.splice(${i},1);renderizarFilasRoles()" style="background:var(--danger); border:none; color:white; padding:5px 8px; border-radius:4px; cursor:pointer;">✕</button>` : ''}
+            </div>`;
         });
     }
 
-    function agregarFilaRol() {
-        rolesEnEdicion.push({ team: "", role: "Jugador" });
-        renderizarFilasRoles();
-    }
-
-    function eliminarFilaRol(index) {
-        rolesEnEdicion.splice(index, 1);
-        renderizarFilasRoles();
-    }
-
-    function actualizarDatoRol(index, campo, valor) {
-        rolesEnEdicion[index][campo] = valor;
-    }
-
+    function agregarFilaRol() { rolesEnEdicion.push({ team: "", role: "Jugador" }); renderizarFilasRoles(); }
     function cerrarModalEdit() { document.getElementById('modal-edit').style.display = 'none'; }
     function abrirVisor(url) { document.getElementById('modal-img').src = url; document.getElementById('modal-visor').style.display = 'flex'; }
+    function previsualizarArchivo(input) { if (input.files[0]) { const reader = new FileReader(); reader.onload = e => { document.getElementById('edit-foto-v').src = e.target.result; currentBase64 = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
+
+    function guardarCambiosInscripcion() {
+        const id = document.getElementById('edit-id').value;
+        const up = { jugadorName: document.getElementById('edit-name').value, shirtNum: document.getElementById('edit-number').value, roles: rolesEnEdicion, fotoCarnet: currentBase64 };
+        db.ref('inscripciones/' + id).update(up).then(() => { cerrarModalEdit(); sincronizarConfiguracion(); });
+    }
+
+    function actualizarEstado(id, est) { db.ref('inscripciones/' + id).update({ estado: est }).then(() => { if(est==='approved') sincronizarConfiguracion(); }); }
     function borrarInscripcion(id) { if(confirm("¿Eliminar?")) db.ref('inscripciones/' + id).remove(); }
+
+    function sincronizarConfiguracion() {
+        let nuevos = [];
+        for (let id in rawData) {
+            const r = rawData[id];
+            if (r.estado === "approved") {
+                (r.roles || [{ team: r.teamName, role: "Jugador" }]).forEach(rol => {
+                    if(rol.team) nuevos.push({ equipo: rol.team, info: `#${r.shirtNum || '00'} ${r.jugadorName} (${obtenerSiglaRol(rol.role)})` });
+                });
+            }
+        }
+        db.ref('config/jugadores').set(nuevos);
+    }
 
     function actualizarFiltroEquipos() {
         const select = document.getElementById('filter-team');
-        if(!select) return;
-        const equipos = new Set();
-        for (let id in rawData) {
-            const r = rawData[id];
-            const lista = r.roles || [{ team: r.teamName || "Sin Equipo" }];
-            lista.forEach(rol => equipos.add(rol.team));
-        }
-        const val = select.value;
+        const eqSet = new Set();
+        for (let id in rawData) (rawData[id].roles || [{ team: rawData[id].teamName }]).forEach(rol => eqSet.add(rol.team));
+        const current = select.value;
         select.innerHTML = '<option value="">Todos los Equipos</option>';
-        Array.from(equipos).sort().forEach(eq => {
-            if(eq) select.innerHTML += `<option value="${eq}" ${val === eq ? 'selected' : ''}>${eq}</option>`;
-        });
-    }
-
-    function escucharUsuarios() {
-        db.ref('whitelist').on('value', snap => {
-            const body = document.getElementById('users-body');
-            if(!body) return;
-            body.innerHTML = "";
-            const users = snap.val() || {};
-            for(let id in users) body.innerHTML += `<tr><td>${users[id].email}</td><td>${users[id].role}</td><td>---</td></tr>`;
-        });
+        Array.from(eqSet).sort().forEach(e => { if(e) select.innerHTML += `<option value="${e}" ${current===e?'selected':''}>${e}</option>`; });
     }
 
     function exportarCSV() {
         let csv = "Jugador,Numero,Equipos,Estado\n";
         for (let id in rawData) {
             const r = rawData[id];
-            const rolesText = (r.roles || []).map(rol => `${rol.team}(${rol.role})`).join(" | ") || r.teamName;
-            csv += `"${r.jugadorName}","${r.shirtNum}","${rolesText}","${r.estado}"\n`;
+            const rolesT = (r.roles || []).map(rol => `${rol.team}(${rol.role})`).join(" | ");
+            csv += `"${r.jugadorName}","${r.shirtNum}","${rolesT}","${r.estado}"\n`;
         }
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'inscripciones_uerh.csv';
-        a.click();
+        const a = document.createElement('a'); a.href = url; a.download = 'inscripciones.csv'; a.click();
     }
 </script>
 </body>
